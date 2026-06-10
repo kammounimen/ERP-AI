@@ -1,0 +1,8 @@
+pdfplumber
+pytesseract
+pdf2image
+opencv-python
+pillow
+numpy
+mysql-connector-python
+python-dotenv
