@@ -6,3 +6,21 @@ pillow
 numpy
 mysql-connector-python
 python-dotenv
+
+# ── Extraction PDF & images ─────────────────────────────
+pdfplumber>=0.11.0
+pymupdf>=1.24.0          # fitz (PDF → image)
+pillow>=10.0.0           # PIL (images)
+pytesseract>=0.3.10      # OCR fallback
+
+# ── Base de données ──────────────────────────────────────
+pymysql>=1.1.0
+
+# ── API & HTTP ───────────────────────────────────────────
+requests>=2.31.0
+
+# ── Agent de recherche ───────────────────────────────────
+rapidfuzz>=3.6.0         # Fuzzy search (Levenshtein)
+
+# ── Configuration ────────────────────────────────────────
+python-dotenv>=1.0.0
