@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP-AI — Access Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+:root {
+  --indigo:       #4B5EA6;
+  --indigo-dark:  #3A4D8F;
+  --indigo-light: #6B7FC4;
+  --indigo-pale:  #EEF0FA;
+  --sidebar-bg:   #1E2A4A;
+  --sidebar-w:    250px;
+  --topbar-h:     60px;
+  --green:        #2EAB6E;
+  --green-soft:   #E3F7EE;
+  --orange:       #E07C2E;
+  --orange-soft:  #FEF0E3;
+  --red:          #E04545;
+  --red-soft:     #FDE8E8;
+  --purple:       #7C5CBF;
+  --purple-soft:  #F0EBFA;
+  --text-soft:    #8A95B0;
+  --border:       #DDE2EF;
+  --offwhite:     #F4F6FB;
+}
+
+* { font-family: 'Inter', sans-serif; }
+body { background: var(--offwhite); }
+
+/* ── PAGES ── */
+.page { display: none; min-height: 100vh; }
+.page.active { display: flex; }
+
+/* ════════════════════════════════
+   LOGIN PAGE
+════════════════════════════════ */
+#page-login {
+  width: 100%; height: 100vh;
+  flex-direction: row;
+  position: relative;
+  background: #1a2340;
+  align-items: center;
+  justify-content: center;
+}
+.login-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.20) 100%),
+    url('static/team_bg.png') center/cover no-repeat;
+}
+.login-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: none;
+}
+.login-card {
+  position: relative; z-index: 2;
+  width: 460px; min-height: auto;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 56px 52px;
+  background: rgba(255,255,255,0.98);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.30);
+}
+.login-logo-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-light) 100%);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: white;
+  box-shadow: 0 4px 14px rgba(75,94,166,.3);
+}
+.login-logo-name { font-size: 22px; font-weight: 700; color: #1A2340; letter-spacing: -.5px; }
+.login-logo-name span { color: var(--indigo); }
+.login-logo-sub { font-size: 10px; color: var(--text-soft); letter-spacing: 1.5px; text-transform: uppercase; }
+.login-heading { font-size: 24px; font-weight: 700; color: #1A2340; letter-spacing: -.4px; }
+.login-subhead { font-size: 13px; color: var(--text-soft); }
+
+.form-label-custom {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .6px; color: #4A5578; margin-bottom: 6px;
+}
+.form-control-custom {
+  border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 11px 14px;
+  font-size: 14px; color: #1A2340;
+  background: #F4F6FB;
+  transition: all .2s;
+}
+.form-control-custom:focus {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px rgba(75,94,166,.12);
+  background: #fff; outline: none;
+}
+.form-control-custom.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+.form-control-custom::placeholder { color: var(--text-soft); }
+
+.lic-status { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; }
+.lic-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-soft); }
+.lic-dot.valid { background: var(--green); }
+.lic-dot.invalid { background: var(--red); }
+
+.btn-signin {
+  width: 100%; padding: 13px;
+  background: var(--indigo); border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600; color: #fff; letter-spacing: .4px;
+  box-shadow: 0 4px 16px rgba(75,94,166,.4);
+  transition: all .2s; cursor: pointer;
+}
+.btn-signin:hover { background: var(--indigo-dark); transform: translateY(-1px); }
+.btn-signin:disabled { opacity: .55; }
+
+.alert-custom {
+  border-radius: 8px; font-size: 13px; font-weight: 500;
+  padding: 10px 14px; display: none; align-items: center; gap: 8px;
+}
+.alert-custom.error   { background: var(--red-soft); color: var(--red); border: 1px solid #f5b8b8; display: flex; }
+.alert-custom.success { background: var(--green-soft); color: var(--green); border: 1px solid #b2e8cf; display: flex; }
+.alert-custom.hidden  { display: none !important; }
+
+.login-footer-text { font-size: 11px; color: var(--text-soft); text-align: center; line-height: 1.8; }
+.spin { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+#page-dashboard { flex-direction: column; }
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1040;
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 8px rgba(30,42,74,.06);
+  display: flex; align-items: center; padding: 0 24px; gap: 14px;
+}
+.tb-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-light));
+  border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.tb-logo-name { font-size: 17px; font-weight: 700; color: #1A2340; letter-spacing: -.3px; }
+.tb-logo-name span { color: var(--indigo); }
+.tb-divider { width: 1px; height: 22px; background: var(--border); }
+.tb-breadcrumb { font-size: 12px; color: var(--text-soft); }
+.tb-breadcrumb strong { color: #4A5578; font-weight: 500; }
+
+.tb-badge {
+  width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #4A5578; font-size: 17px; position: relative;
+  transition: all .2s;
+}
+.tb-badge:hover { border-color: var(--indigo); color: var(--indigo); }
+.tb-notif-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px; background: var(--red);
+  border-radius: 50%; border: 1.5px solid white;
+}
+.tb-user {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 12px 4px 4px; border: 1px solid var(--border);
+  border-radius: 24px; cursor: pointer; transition: all .2s;
+}
+.tb-user:hover { border-color: var(--indigo); }
+.tb-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.tb-uname { font-size: 13px; font-weight: 600; color: #1A2340; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 1030;
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); }
+
+.sb-header {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.sb-app-label { font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 2px; }
+.sb-app-name  { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.8); }
+
+.sb-section { padding: 16px 0 6px; }
+.sb-section-label {
+  padding: 0 20px 8px;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: rgba(255,255,255,.28);
+}
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.6); cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .18s; text-decoration: none;
+}
+.sb-item i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.sb-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.92); }
+.sb-item.active { background: rgba(255,255,255,.12); color: #fff; border-left-color: #8BA3E8; font-weight: 600; }
+.sb-item.launch { color: #8BA3E8; font-weight: 600; }
+.sb-item.launch:hover { color: #B8CAFF; background: rgba(139,163,232,.1); }
+.sb-item.logout { color: rgba(252,129,129,.8); }
+.sb-item.logout:hover { color: #FC8181; background: rgba(252,129,129,.08); }
+.sb-arrow { margin-left: auto; font-size: 11px; opacity: .35; }
+.sb-item.active .sb-arrow { opacity: .6; }
+.sb-divider { margin: 8px 20px; border-color: rgba(255,255,255,.07); }
+
+.sb-footer {
+  margin-top: auto; padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.sb-avatar-lg {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #5B73C8, #8BA3E8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.sb-uname { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
+.sb-role  { font-size: 11px; color: rgba(255,255,255,.38); }
+
+/* MAIN CONTENT */
+.dash-main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 28px 32px;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* PAGE HEADER */
+.page-title { font-size: 21px; font-weight: 700; color: #1A2340; letter-spacing: -.4px; margin-bottom: 2px; }
+.breadcrumb-custom { font-size: 12px; color: var(--text-soft); margin-bottom: 0; }
+.breadcrumb-custom span { color: #4A5578; }
+
+/* CARDS */
+.card { border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 6px rgba(30,42,74,.05); }
+.card-header-custom {
+  font-size: 13px; font-weight: 700; color: #1A2340; letter-spacing: .1px;
+  padding-bottom: 14px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-header-custom .sub { font-size: 11px; font-weight: 400; color: var(--text-soft); margin-left: auto; }
+
+/* STAT CARDS */
+.stat-card { border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; background: #fff; transition: all .2s; }
+.stat-card:hover { border-color: var(--indigo); box-shadow: 0 4px 18px rgba(75,94,166,.13); }
+.stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); }
+.stat-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.stat-icon.indigo { background: var(--indigo-pale); color: var(--indigo); }
+.stat-icon.green  { background: var(--green-soft);  color: var(--green); }
+.stat-icon.orange { background: var(--orange-soft); color: var(--orange); }
+.stat-icon.red    { background: var(--red-soft);    color: var(--red); }
+.stat-icon.purple { background: var(--purple-soft); color: var(--purple); }
+.stat-value { font-size: 30px; font-weight: 700; color: #1A2340; letter-spacing: -1px; }
+.stat-delta { font-size: 12px; color: var(--text-soft); }
+.stat-delta.up { color: var(--green); }
+
+/* BADGES */
+.badge-green  { background: var(--green-soft);  color: #1a8050; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.badge-indigo { background: var(--indigo-pale); color: var(--indigo); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.badge-orange { background: var(--orange-soft); color: var(--orange); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.badge-red    { background: var(--red-soft);    color: var(--red); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.badge-gray   { background: #f0f1f5; color: var(--text-soft); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+/* USERS SECTION STYLES */
+.badge-purple { background: var(--purple-soft); color: var(--purple); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.filter-tabs { display: flex; gap: 6px; }
+.filter-tab { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--text-soft); transition: all .18s; }
+.filter-tab:hover { border-color: var(--indigo); color: var(--indigo); }
+.filter-tab.active { background: var(--indigo-pale); border-color: var(--indigo); color: var(--indigo); }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+.avatar-admin    { background: linear-gradient(135deg, #4B5EA6, #6B7FC4); }
+.avatar-operator { background: linear-gradient(135deg, #2EAB6E, #52C99B); }
+.avatar-viewer   { background: linear-gradient(135deg, #8A95B0, #B0BAD0); }
+.search-input { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px 8px 36px; font-size: 13px; color: #1A2340; background: var(--offwhite); transition: all .2s; outline: none; width: 220px; }
+.search-input:focus { border-color: var(--indigo); background: #fff; box-shadow: 0 0 0 3px rgba(75,94,166,.1); }
+.search-wrap { position: relative; }
+.search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-soft); font-size: 14px; }
+.pass-wrap { position: relative; }
+.pass-wrap .form-control-custom { padding-right: 42px; }
+.pass-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-soft); cursor: pointer; font-size: 16px; background: none; border: none; padding: 0; transition: color .2s; }
+.pass-toggle:hover { color: var(--indigo); }
+.pass-strength { display: flex; gap: 4px; margin-top: 6px; }
+.pass-strength-bar { flex: 1; height: 3px; border-radius: 4px; background: var(--border); transition: background .3s; }
+.pass-strength-bar.weak   { background: var(--red); }
+.pass-strength-bar.medium { background: var(--orange); }
+.pass-strength-bar.strong { background: var(--green); }
+.pass-strength-label { font-size: 11px; color: var(--text-soft); margin-top: 4px; }
+.modal-custom .modal-content { border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 48px rgba(30,42,74,.18); }
+.modal-custom .modal-header { border-bottom: 1px solid var(--border); padding: 20px 24px; }
+.modal-custom .modal-body { padding: 24px; }
+.modal-custom .modal-footer { border-top: 1px solid var(--border); padding: 16px 24px; gap: 8px; }
+.modal-title-custom { font-size: 16px; font-weight: 700; color: #1A2340; }
+.toggle-switch { display: flex; align-items: center; gap: 10px; }
+.switch { position: relative; width: 42px; height: 23px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider { position: absolute; inset: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: background .2s; }
+.switch-slider::before { content: ''; position: absolute; width: 17px; height: 17px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.switch input:checked + .switch-slider { background: var(--green); }
+.switch input:checked + .switch-slider::before { transform: translateX(19px); }
+.info-box { background: var(--indigo-pale); border: 1px solid #c5ccf0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #3A4D8F; display: flex; align-items: flex-start; gap: 8px; }
+.last-login { font-size: 11px; color: var(--text-soft); }
+.last-login.never { color: #c0c8e0; font-style: italic; }
+.empty-state { text-align: center; padding: 60px 0; color: var(--text-soft); }
+.empty-state i { font-size: 40px; opacity: .3; display: block; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; margin: 0; }
+.confirm-backdrop { position: fixed; inset: 0; z-index: 9000; background: rgba(15,22,45,0.45); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; backdrop-filter: blur(2px); }
+.confirm-backdrop.show { opacity: 1; pointer-events: all; }
+.confirm-box { background: #fff; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 24px 64px rgba(15,22,45,.22); padding: 32px 28px 24px; width: 100%; max-width: 400px; transform: scale(.94) translateY(10px); transition: transform .22s cubic-bezier(.34,1.3,.64,1), opacity .2s; opacity: 0; }
+.confirm-backdrop.show .confirm-box { transform: scale(1) translateY(0); opacity: 1; }
+.confirm-icon-wrap { width: 52px; height: 52px; border-radius: 14px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--red); margin: 0 auto 18px; }
+.confirm-title { font-size: 16px; font-weight: 700; color: #1A2340; text-align: center; margin-bottom: 8px; }
+.confirm-msg   { font-size: 13px; color: var(--text-soft); text-align: center; line-height: 1.6; margin-bottom: 6px; }
+.confirm-detail { font-size: 12px; background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: center; color: #1A2340; font-weight: 600; margin: 0 0 22px; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions button { flex: 1; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .18s; }
+.confirm-cancel { background: var(--offwhite); color: #4A5578; border: 1px solid var(--border) !important; }
+.confirm-cancel:hover { border-color: var(--indigo) !important; color: var(--indigo); }
+.confirm-delete { background: var(--red); color: #fff; box-shadow: 0 4px 14px rgba(224,69,69,.35); }
+.confirm-delete:hover { background: #c93333; transform: translateY(-1px); }
+
+/* STATUS DOTS */
+.dot-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.green  { background: var(--green);  box-shadow: 0 0 0 3px var(--green-soft); animation: blink 2s infinite; }
+.dot.red    { background: var(--red);    box-shadow: 0 0 0 3px var(--red-soft); }
+.dot.orange { background: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); animation: blink 2.5s infinite; }
+.dot.gray   { background: #adb5bd; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* INFO ROWS */
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-key   { color: var(--text-soft); font-weight: 500; }
+.info-value { color: #1A2340; font-weight: 600; }
+
+/* PROGRESS */
+.prog-label { font-size: 12px; color: #4A5578; margin-bottom: 5px; display: flex; justify-content: space-between; }
+.progress { height: 5px; border-radius: 4px; background: var(--border); margin-bottom: 14px; }
+.progress-bar { border-radius: 4px; transition: width .6s ease; }
+.progress-bar.green  { background: var(--green); }
+.progress-bar.indigo { background: var(--indigo); }
+.progress-bar.orange { background: var(--orange); }
+.progress-bar.red    { background: var(--red); }
+
+/* LOGS */
+.logs-console {
+  background: #0f172a; border-radius: 10px;
+  padding: 14px 16px; height: 200px; overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.9;
+}
+.logs-console::-webkit-scrollbar { width: 4px; }
+.logs-console::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.log-line { display: flex; gap: 12px; }
+.log-ts   { color: #475569; flex-shrink: 0; }
+.log-INFO    { color: #4ade80; }
+.log-WARNING { color: #fbbf24; }
+.log-ERROR   { color: #f87171; }
+.log-msg     { color: #94a3b8; }
+
+/* LAUNCH BANNER */
+.launch-banner {
+  background: linear-gradient(135deg, #2E3E7A 0%, var(--indigo) 60%, var(--indigo-light) 100%);
+  border-radius: 14px; padding: 26px 30px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 6px 24px rgba(75,94,166,.28);
+  position: relative; overflow: hidden;
+}
+.launch-banner::before {
+  content: ''; position: absolute; right: -30px; top: -30px;
+  width: 180px; height: 180px; background: rgba(255,255,255,.05); border-radius: 50%;
+}
+.launch-banner h3 { font-size: 18px; font-weight: 700; color: white; margin-bottom: 3px; }
+.launch-banner p  { font-size: 13px; color: rgba(255,255,255,.65); margin: 0; }
+.btn-launch {
+  padding: 11px 26px; background: white; color: var(--indigo);
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .2s; white-space: nowrap; flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+}
+.btn-launch:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+/* BUTTONS */
+.btn-erp-primary { background: var(--indigo); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba(75,94,166,.3); }
+.btn-erp-primary:hover { background: var(--indigo-dark); }
+.btn-erp-outline { background: white; color: #4A5578; border: 1px solid var(--border); border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-erp-outline:hover { border-color: var(--indigo); color: var(--indigo); }
+.btn-erp-green  { background: var(--green-soft); color: #1a8050; border: 1px solid #b2e8cf; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-erp-green:hover  { background: var(--green); color: white; border-color: var(--green); }
+.btn-erp-red    { background: var(--red-soft); color: var(--red); border: 1px solid #f5b8b8; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-erp-red:hover    { background: var(--red); color: white; }
+.btn-erp-orange { background: var(--orange-soft); color: var(--orange); border: 1px solid #f8d5b2; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-erp-orange:hover { background: var(--orange); color: white; }
+
+/* SETTINGS */
+.settings-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #4A5578; margin-bottom: 6px; display: block; }
+.settings-select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; color: #1A2340; background: #fff; outline: none; transition: border-color .2s; }
+.settings-select:focus { border-color: var(--indigo); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 13px; color: #4A5578; }
+.toggle { position: relative; width: 38px; height: 21px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 11px; cursor: pointer; transition: background .2s; }
+.toggle-slider::before { content: ''; position: absolute; width: 15px; height: 15px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.toggle input:checked + .toggle-slider { background: var(--indigo); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(17px); }
+
+/* LICENCE KEY */
+.lic-key-display {
+  background: var(--offwhite); border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--indigo); display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* KEY MONO */
+.key-mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--indigo); background: var(--indigo-pale); padding: 3px 8px; border-radius: 6px; letter-spacing: .5px; }
+
+/* TABLE ERP */
+.table-erp { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.table-erp thead th { background: var(--offwhite); color: var(--text-soft); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 10px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table-erp tbody tr { transition: background .15s; }
+.table-erp tbody tr:hover { background: var(--indigo-pale); }
+.table-erp tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: #1A2340; }
+.table-erp tbody tr:last-child td { border-bottom: none; }
+.table-erp-inactive { opacity: .6; }
+
+/* AI CARD */
+.ai-meta-row { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.ai-meta { color: var(--text-soft); font-size: 12px; }
+
+/* TOAST */
+.toast-container-custom {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+}
+.toast-custom {
+  background: white; border: 1px solid var(--border); border-radius: 10px;
+  padding: 13px 18px; font-size: 13px; color: #1A2340;
+  box-shadow: 0 8px 32px rgba(30,42,74,.18);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(60px); opacity: 0; transition: all .25s;
+  min-width: 260px;
+}
+.toast-custom.show { transform: translateY(0); opacity: 1; }
+.toast-custom.success { border-color: #b2e8cf; }
+.toast-custom.error   { border-color: #f5b8b8; }
+
+/* FOOTER */
+.dash-footer {
+  margin-left: var(--sidebar-w);
+  background: white; border-top: 1px solid var(--border);
+  padding: 16px 32px; font-size: 11px; color: var(--text-soft);
+  display: flex; justify-content: center; gap: 20px;
+}
+.dash-footer a { color: var(--indigo); text-decoration: none; }
+.dash-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="toast-container-custom">
+  <div class="toast-custom" id="toast"></div>
+</div>
+
+<!-- ════════════════════════════════
+     LOGIN
+════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="login-bg"></div>
+
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="login-logo-icon">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div>
+        <div class="login-logo-name">ERP<span>-AI</span></div>
+        <div class="login-logo-sub">Control Center</div>
+      </div>
+    </div>
+
+    <div class="login-heading mb-1">Bienvenue</div>
+    <div class="login-subhead mb-4">Connectez-vous pour accéder au tableau de bord</div>
+
+    <div class="alert-custom hidden" id="login-alert"></div>
+
+    <div class="mb-3">
+      <label class="form-label-custom">Identifiant ou Email</label>
+      <input type="text" class="form-control-custom w-100" id="inp-user" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Mot de passe</label>
+      <input type="password" class="form-control-custom w-100" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <input type="checkbox" id="remember" class="form-check-input" style="accent-color:var(--indigo);width:16px;height:16px;" checked>
+      <label for="remember" style="font-size:13px;color:#4A5578;cursor:pointer;">Rester connecté</label>
+    </div>
+
+    <button class="btn-signin mb-3" id="btn-sign" onclick="doLogin()">SE CONNECTER</button>
+
+    <div class="login-footer-text">
+      ERP-AI System · Mistral AI · Serveur local<br>
+      Accès restreint — personnel autorisé uniquement
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     DASHBOARD
+════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="d-flex align-items-center gap-2 me-2">
+      <div class="tb-logo-icon"><i class="bi bi-receipt"></i></div>
+      <div class="tb-logo-name">ERP<span>-AI</span></div>
+    </div>
+    <div class="tb-divider"></div>
+    <div class="tb-breadcrumb">Control Center › <strong id="tb-section">Accueil</strong></div>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <select class="form-select form-select-sm" style="width:160px;border-color:var(--border);font-size:13px;color:#4A5578;">
+        <option>Control Center</option>
+        <option>ERP System</option>
+      </select>
+      <div class="tb-badge" onclick="navTo('settings')" title="Paramètres"><i class="bi bi-gear"></i></div>
+      <div class="tb-badge" title="Notifications"><i class="bi bi-bell"></i><div class="tb-notif-dot"></div></div>
+      <div class="tb-user" onclick="navTo('profile')">
+        <div class="tb-avatar" id="tb-av">A</div>
+        <span class="tb-uname" id="tb-uname">Admin</span>
+        <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-soft);"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-header">
+      <div class="sb-app-label">Navigation</div>
+      <div class="sb-app-name">ERP-AI Suite</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Principal</div>
+      <div class="sb-item active" onclick="navTo('home')">
+        <i class="bi bi-house-door"></i>Accueil<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('profile')">
+        <i class="bi bi-person-circle"></i>Profil Utilisateur<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('licence')" id="sb-nav-licence">
+        <i class="bi bi-key"></i>Gestion Licence<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('users')" id="sb-nav-users">
+        <i class="bi bi-people-fill"></i>Gestion Utilisateurs<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Système</div>
+      <div class="sb-item" onclick="navTo('status')">
+        <i class="bi bi-activity"></i>État du Système<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('logs')">
+        <i class="bi bi-terminal"></i>Journal d'Activité<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('ai')">
+        <i class="bi bi-cpu"></i>Services IA<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+      <div class="sb-item" onclick="navTo('settings')">
+        <i class="bi bi-sliders"></i>Paramètres<i class="bi bi-chevron-right sb-arrow"></i>
+      </div>
+    </div>
+
+    <hr class="sb-divider">
+
+    <div class="sb-item launch" onclick="launchERP()">
+      <i class="bi bi-box-arrow-up-right"></i>Lancer ERP
+    </div>
+    <div class="sb-item logout" onclick="doLogout()">
+      <i class="bi bi-box-arrow-left"></i>Déconnexion
+    </div>
+
+    <div class="sb-footer">
+      <div class="d-flex align-items-center gap-2">
+        <div class="sb-avatar-lg" id="sb-av">A</div>
+        <div>
+          <div class="sb-uname" id="sb-uname">Admin</div>
+          <div class="sb-role"  id="sb-role">Administrateur</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="dash-main">
+
+    <!-- HOME -->
+    <div class="section active" id="sec-home">
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <div class="page-title">Tableau de bord</div>
+          <div class="breadcrumb-custom">ERP-AI Control Center › <span>Accueil</span></div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-erp-outline" onclick="refreshAll()"><i class="bi bi-arrow-clockwise me-1"></i>Actualiser</button>
+          <button class="btn-erp-primary" onclick="launchERP()"><i class="bi bi-box-arrow-up-right me-1"></i>Lancer ERP</button>
+        </div>
+      </div>
+
+      <!-- Welcome banner -->
+      <div class="launch-banner mb-4">
+        <div>
+          <h3>Bonjour, <span id="welcome-name">Admin</span></h3>
+          <p id="welcome-role">Administrateur · Licence active · Dernière connexion : aujourd'hui</p>
+        </div>
+        <button class="btn-launch" onclick="launchERP()"><i class="bi bi-box-arrow-up-right me-2"></i>Ouvrir l'interface ERP</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="stat-label">Total Factures</div>
+              <div class="stat-icon indigo"><i class="bi bi-receipt"></i></div>
+            </div>
+            <div class="stat-value" id="st-total">—</div>
+            <div class="stat-delta mt-1">Base de données</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="stat-label">Aujourd'hui</div>
+              <div class="stat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+            </div>
+            <div class="stat-value" id="st-today">—</div>
+            <div class="stat-delta up mt-1"><i class="bi bi-arrow-up-short"></i>Nouvelles entrées</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="stat-label">Volume Total</div>
+              <div class="stat-icon orange"><i class="bi bi-currency-exchange"></i></div>
+            </div>
+            <div class="stat-value" id="st-rev">—</div>
+            <div class="stat-delta mt-1">TND</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="stat-label">Agents IA</div>
+              <div class="stat-icon indigo"><i class="bi bi-cpu"></i></div>
+            </div>
+            <div class="stat-value">2</div>
+            <div class="stat-delta up mt-1"><i class="bi bi-check-circle"></i> Actifs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status + Resources -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <div class="card-header-custom">
+              <i class="bi bi-activity text-primary"></i> État du Système
+              <span class="sub" id="last-refresh">—</span>
+            </div>
+            <div class="info-row"><span class="info-key">Serveur d'authentification</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">EN LIGNE</span></span></div>
+            <div class="info-row"><span class="info-key">Connexion ERP</span><span class="dot-status" id="erp-conn"><div class="dot orange"></div><span style="color:var(--orange)">VÉRIFICATION</span></span></div>
+            <div class="info-row"><span class="info-key">Base MySQL</span><span class="dot-status" id="db-status"><div class="dot gray"></div><span style="color:#adb5bd">—</span></span></div>
+            <div class="info-row"><span class="info-key">Agent d'extraction</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">PRÊT</span></span></div>
+            <div class="info-row"><span class="info-key">Agent de recherche</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">PRÊT</span></span></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <div class="card-header-custom"><i class="bi bi-server text-primary"></i> Ressources Serveur</div>
+            <div class="prog-label"><span>Utilisation CPU</span><span id="r-cpu">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar green" id="b-cpu" style="width:0%"></div></div>
+            <div class="prog-label"><span>Mémoire RAM</span><span id="r-mem">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar indigo" id="b-mem" style="width:0%"></div></div>
+            <div class="prog-label"><span>Stockage Disque</span><span id="r-disk">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar orange" id="b-disk" style="width:0%"></div></div>
+            <div class="info-row"><span class="info-key">Système d'exploitation</span><span style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--indigo)" id="r-os">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="card p-4 mb-3">
+        <div class="card-header-custom">
+          <i class="bi bi-terminal text-primary"></i> Journal d'activité récent
+          <button class="btn-erp-outline sub" style="padding:4px 12px;font-size:12px;" onclick="navTo('logs')">Voir tout</button>
+        </div>
+        <div class="logs-console" id="home-logs">
+          <div class="log-line"><span class="log-ts">—:—:—</span><span class="log-INFO ms-2">INFO</span><span class="log-msg ms-2">Chargement...</span></div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="card p-4">
+        <div class="card-header-custom"><i class="bi bi-toggles text-primary"></i> Contrôles Système</div>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button class="btn-erp-green"  onclick="sysCtrl('start')"><i class="bi bi-play-fill me-1"></i>Démarrer</button>
+          <button class="btn-erp-red"    onclick="sysCtrl('stop')"><i class="bi bi-stop-fill me-1"></i>Arrêter</button>
+          <button class="btn-erp-orange" onclick="sysCtrl('restart')"><i class="bi bi-arrow-clockwise me-1"></i>Redémarrer API</button>
+          <button class="btn-erp-outline" onclick="refreshAll()"><i class="bi bi-arrow-clockwise me-1"></i>Actualiser</button>
+        </div>
+        <div class="d-flex align-items-center justify-content-between" style="background:var(--offwhite);border:1px solid var(--border);border-radius:8px;padding:10px 14px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--indigo)" id="api-url-home">http://localhost:8000</span>
+          <button onclick="copyUrl()" style="background:none;border:none;cursor:pointer;color:var(--text-soft);font-size:16px;" title="Copier"><i class="bi bi-copy"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="section" id="sec-profile">
+      <div class="mb-4">
+        <div class="page-title">Profil Utilisateur</div>
+        <div class="breadcrumb-custom">ERP-AI Control Center › <span>Profil</span></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-person-circle text-primary"></i> Informations du compte</div>
+            <div class="info-row"><span class="info-key">Identifiant</span><span class="info-value" id="p-user">—</span></div>
+            <div class="info-row"><span class="info-key">Email</span><span class="info-value" id="p-email">—</span></div>
+            <div class="info-row"><span class="info-key">Nom complet</span><span class="info-value" id="p-name">—</span></div>
+            <div class="info-row"><span class="info-key">Rôle</span><span class="info-value"><span class="badge-indigo" id="p-role">—</span></span></div>
+            <div class="info-row"><span class="info-key">Statut</span><span class="info-value"><span class="badge-green">Actif</span></span></div>
+            <div class="info-row"><span class="info-key">Dernière connexion</span><span class="info-value" id="p-last">—</span></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-shield-lock text-primary"></i> Permissions d'accès</div>
+            <div class="info-row"><span class="info-key">Upload Factures</span><span id="perm-upload" class="info-value">—</span></div>
+            <div class="info-row"><span class="info-key">Recherche IA</span><span class="info-value"><span class="badge-green">Autorisé</span></span></div>
+            <div class="info-row"><span class="info-key">Consultation</span><span class="info-value"><span class="badge-green">Autorisé</span></span></div>
+            <div class="info-row"><span class="info-key">Contrôle Système</span><span id="perm-ctrl" class="info-value">—</span></div>
+            <div class="info-row"><span class="info-key">Gestion Utilisateurs</span><span id="perm-users" class="info-value">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LICENCE -->
+    <div class="section" id="sec-licence">
+      <!-- Page header -->
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <div class="page-title"><i class="bi bi-key-fill me-2" style="color:var(--indigo)"></i>Gestion des Licences</div>
+          <div class="breadcrumb-custom">ERP-AI Control Center › <span>Licences clients</span></div>
+        </div>
+        <button class="btn-erp-primary" onclick="openCreateLicModal()">
+          <i class="bi bi-plus-lg"></i> Nouvelle licence
+        </button>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Total licences</div>
+              <div class="stat-icon indigo"><i class="bi bi-key-fill"></i></div>
+            </div>
+            <div class="stat-value" id="ls-total">—</div>
+            <div class="stat-delta mt-1">Toutes les licences</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Actives</div>
+              <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+            </div>
+            <div class="stat-value" id="ls-active">—</div>
+            <div class="stat-delta mt-1">En cours de validité</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Expirées</div>
+              <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+            </div>
+            <div class="stat-value" id="ls-expired">—</div>
+            <div class="stat-delta mt-1">Renouvellement requis</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Bloquées</div>
+              <div class="stat-icon orange"><i class="bi bi-slash-circle-fill"></i></div>
+            </div>
+            <div class="stat-value" id="ls-blocked">—</div>
+            <div class="stat-delta mt-1">Accès suspendu</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE CARD -->
+      <div class="card">
+        <div class="p-4 border-bottom" style="border-color:var(--border)!important">
+          <div class="d-flex align-items-center justify-content-between">
+            <div style="font-size:14px;font-weight:700;color:#1A2340">
+              <i class="bi bi-table me-2" style="color:var(--indigo)"></i>Liste des licences
+              <span style="font-size:12px;font-weight:400;color:var(--text-soft)" class="ms-2" id="lic-count"></span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input class="search-input" type="text" placeholder="Rechercher..." id="licSearchInput" oninput="filterLicTable()">
+              </div>
+              <button class="btn-erp-outline" onclick="loadLicences()" style="padding:8px 12px" title="Actualiser">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table-erp">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Société</th>
+                <th>Utilisateur</th>
+                <th>Clé de licence</th>
+                <th>Statut</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Utilisateurs</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="licencesTable">
+              <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--text-soft)">
+                <span class="spin"></span>&nbsp; Chargement...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="section" id="sec-users">
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <div class="page-title"><i class="bi bi-people-fill me-2" style="color:var(--indigo)"></i>Gestion des Utilisateurs</div>
+          <div class="breadcrumb-custom">ERP-AI Control Center › <span>Utilisateurs</span></div>
+        </div>
+        <button class="btn-erp-primary" onclick="openCreateUserModal()">
+          <i class="bi bi-person-plus-fill"></i> Nouvel utilisateur
+        </button>
+      </div>
+      <!-- Stat cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Total</div>
+              <div class="stat-icon indigo"><i class="bi bi-people-fill"></i></div>
+            </div>
+            <div class="stat-value" id="us-total">—</div>
+            <div class="stat-delta mt-1">Tous les comptes</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Actifs</div>
+              <div class="stat-icon green"><i class="bi bi-person-check-fill"></i></div>
+            </div>
+            <div class="stat-value" id="us-active">—</div>
+            <div class="stat-delta mt-1">Comptes activés</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Admins</div>
+              <div class="stat-icon purple"><i class="bi bi-shield-fill-check"></i></div>
+            </div>
+            <div class="stat-value" id="us-admin">—</div>
+            <div class="stat-delta mt-1">Rôle administrateur</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="stat-label">Désactivés</div>
+              <div class="stat-icon red"><i class="bi bi-person-x-fill"></i></div>
+            </div>
+            <div class="stat-value" id="us-inactive">—</div>
+            <div class="stat-delta mt-1">Accès bloqué</div>
+          </div>
+        </div>
+      </div>
+      <!-- Table -->
+      <div class="card">
+        <div class="p-4 border-bottom" style="border-color:var(--border)!important">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div style="font-size:14px;font-weight:700;color:#1A2340">
+              <i class="bi bi-table me-2" style="color:var(--indigo)"></i>Liste des utilisateurs
+              <span style="font-size:12px;font-weight:400;color:var(--text-soft)" class="ms-2" id="user-count"></span>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="filter-tabs">
+                <button class="filter-tab active" onclick="setUserFilter('all', this)">Tous</button>
+                <button class="filter-tab" onclick="setUserFilter('active', this)"><i class="bi bi-circle-fill me-1" style="color:var(--green);font-size:7px"></i>Actifs</button>
+                <button class="filter-tab" onclick="setUserFilter('inactive', this)"><i class="bi bi-circle-fill me-1" style="color:var(--red);font-size:7px"></i>Désactivés</button>
+                <button class="filter-tab" onclick="setUserFilter('admin', this)">Admins</button>
+              </div>
+              <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input class="search-input" type="text" placeholder="Nom, email, rôle..." id="userSearchInput" oninput="applyUserFilters()">
+              </div>
+              <button class="btn-erp-outline" onclick="loadUsers()" style="padding:8px 12px"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table-erp">
+            <thead>
+              <tr>
+                <th>#</th><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Licence / Société</th><th>Statut</th><th>Dernière connexion</th><th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="8" style="padding:40px;text-align:center;color:var(--text-soft)"><span class="spin"></span>&nbsp; Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="section" id="sec-status">
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <div class="page-title">État du Système</div>
+          <div class="breadcrumb-custom">ERP-AI Control Center › <span>État</span></div>
+        </div>
+        <button class="btn-erp-outline" onclick="refreshAll()"><i class="bi bi-arrow-clockwise me-1"></i>Actualiser</button>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-hdd-network text-primary"></i> Services</div>
+            <div class="info-row"><span class="info-key">Serveur d'authentification</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">EN LIGNE</span></span></div>
+            <div class="info-row"><span class="info-key">Interface ERP</span><span class="dot-status" id="s2-erp"><div class="dot orange"></div><span style="color:var(--orange)">VÉRIFICATION</span></span></div>
+            <div class="info-row"><span class="info-key">Base de données MySQL</span><span class="dot-status" id="s2-db"><div class="dot gray"></div><span style="color:#adb5bd">—</span></span></div>
+            <div class="info-row"><span class="info-key">Agent d'extraction</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">PRÊT</span></span></div>
+            <div class="info-row"><span class="info-key">Agent de recherche</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">PRÊT</span></span></div>
+            <div class="info-row"><span class="info-key">Licence</span><span class="dot-status"><div class="dot green"></div><span style="color:var(--green)">VALIDE</span></span></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-server text-primary"></i> Ressources Serveur</div>
+            <div class="prog-label"><span>CPU</span><span id="s2-cpu">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar green" id="s2-bcpu" style="width:0%"></div></div>
+            <div class="prog-label"><span>Mémoire</span><span id="s2-mem">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar indigo" id="s2-bmem" style="width:0%"></div></div>
+            <div class="prog-label"><span>Disque</span><span id="s2-disk">—</span></div>
+            <div class="progress mb-3"><div class="progress-bar orange" id="s2-bdisk" style="width:0%"></div></div>
+            <div class="info-row"><span class="info-key">OS</span><span style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--indigo)" id="s2-os">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <div class="card-header-custom"><i class="bi bi-toggles text-primary"></i> Contrôles Système</div>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button class="btn-erp-green"  onclick="sysCtrl('start')"><i class="bi bi-play-fill me-1"></i>Démarrer</button>
+          <button class="btn-erp-red"    onclick="sysCtrl('stop')"><i class="bi bi-stop-fill me-1"></i>Arrêter</button>
+          <button class="btn-erp-orange" onclick="sysCtrl('restart')"><i class="bi bi-arrow-clockwise me-1"></i>Redémarrer API</button>
+        </div>
+        <div style="background:var(--offwhite);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--indigo)">
+          API URL : <span id="api-url-status">http://localhost:8000</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="section" id="sec-logs">
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <div class="page-title">Journal d'Activité</div>
+          <div class="breadcrumb-custom">ERP-AI Control Center › <span>Logs</span></div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-erp-outline" onclick="loadLogs()"><i class="bi bi-arrow-clockwise me-1"></i>Actualiser</button>
+          <button class="btn-erp-outline" onclick="clearLogs()"><i class="bi bi-trash me-1"></i>Effacer</button>
+        </div>
+      </div>
+      <div class="card p-4">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <button class="btn-erp-outline" style="font-size:12px;padding:5px 14px;" onclick="filterLogs('ALL')">Tous</button>
+          <button class="btn-erp-outline" style="font-size:12px;padding:5px 14px;color:var(--green);" onclick="filterLogs('INFO')">INFO</button>
+          <button class="btn-erp-outline" style="font-size:12px;padding:5px 14px;color:var(--orange);" onclick="filterLogs('WARNING')">AVERTISSEMENT</button>
+          <button class="btn-erp-outline" style="font-size:12px;padding:5px 14px;color:var(--red);" onclick="filterLogs('ERROR')">ERREUR</button>
+        </div>
+        <div class="logs-console" id="full-logs" style="height:360px">
+          <div class="log-line"><span class="log-ts">—:—:—</span><span class="log-INFO ms-2">INFO</span><span class="log-msg ms-2">Chargement...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI SERVICES -->
+    <div class="section" id="sec-ai">
+      <div class="mb-4">
+        <div class="page-title">Services IA</div>
+        <div class="breadcrumb-custom">ERP-AI Control Center › <span>Services IA</span></div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-file-earmark-text text-primary"></i> Agent d'Extraction</div>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span style="font-size:13px;font-weight:600;">Extraction Agent</span>
+              <span class="badge-green">PRÊT</span>
+            </div>
+            <div class="ai-meta-row"><span class="ai-meta">Modèle texte</span><span style="font-size:12px;font-family:'JetBrains Mono',monospace">mistral-large-latest</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Vision (scannés)</span><span style="font-size:12px;font-family:'JetBrains Mono',monospace">pixtral-large-latest</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Formats supportés</span><span style="font-size:12px">PDF, JPG, PNG, WEBP</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Dernière exécution</span><span class="info-value" id="ai-ext-last">—</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Factures traitées</span><span class="info-value" id="ai-ext-count">—</span></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-search text-primary"></i> Agent de Recherche</div>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span style="font-size:13px;font-weight:600;">Search Agent</span>
+              <span class="badge-green">PRÊT</span>
+            </div>
+            <div class="ai-meta-row"><span class="ai-meta">Stratégie 1</span><span style="font-size:12px">Exacte (SQL =)</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Stratégie 2</span><span style="font-size:12px">Partielle (LIKE)</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Stratégie 3</span><span style="font-size:12px">Floue (RapidFuzz)</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Seuil Fuzzy</span><span style="font-size:12px;font-family:'JetBrains Mono',monospace">78%</span></div>
+            <div class="ai-meta-row"><span class="ai-meta">Normalisation</span><span style="font-size:12px">Accents + Casse + Tokens</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <div class="card-header-custom"><i class="bi bi-graph-up text-primary"></i> Performance des Agents</div>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="text-center p-3" style="border:1px solid var(--border);border-radius:12px;">
+              <div style="font-size:26px;font-weight:700;color:var(--indigo)" id="perf-total">—</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:4px;font-weight:600;letter-spacing:.8px">FACTURES</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center p-3" style="border:1px solid var(--border);border-radius:12px;">
+              <div style="font-size:26px;font-weight:700;color:var(--green)">98%</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:4px;font-weight:600;letter-spacing:.8px">TAUX SUCCÈS</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center p-3" style="border:1px solid var(--border);border-radius:12px;">
+              <div style="font-size:26px;font-weight:700;color:var(--orange)">~2s</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:4px;font-weight:600;letter-spacing:.8px">TEMPS MOYEN</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center p-3" style="border:1px solid var(--border);border-radius:12px;">
+              <div style="font-size:26px;font-weight:700;color:var(--indigo)">3</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:4px;font-weight:600;letter-spacing:.8px">STRATÉGIES</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="section" id="sec-settings">
+      <div class="mb-4">
+        <div class="page-title">Paramètres</div>
+        <div class="breadcrumb-custom">ERP-AI Control Center › <span>Paramètres</span></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-display text-primary"></i> Interface</div>
+            <div class="mb-3">
+              <label class="settings-label">Langue</label>
+              <select class="settings-select"><option>Français</option><option>English</option><option>العربية</option></select>
+            </div>
+            <div class="mb-3">
+              <label class="settings-label">Timeout de session</label>
+              <select class="settings-select"><option>30 minutes</option><option>1 heure</option><option>4 heures</option><option>8 heures</option></select>
+            </div>
+            <div class="card-header-custom mt-2"><i class="bi bi-bell text-primary"></i> Notifications</div>
+            <div class="toggle-row"><span class="toggle-label">Alertes système</span><label class="toggle"><input type="checkbox" checked><div class="toggle-slider"></div></label></div>
+            <div class="toggle-row"><span class="toggle-label">Erreurs agent IA</span><label class="toggle"><input type="checkbox" checked><div class="toggle-slider"></div></label></div>
+            <div class="toggle-row"><span class="toggle-label">Connexions utilisateurs</span><label class="toggle"><input type="checkbox"><div class="toggle-slider"></div></label></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4">
+            <div class="card-header-custom"><i class="bi bi-gear text-primary"></i> Configuration API</div>
+            <div class="mb-3">
+              <label class="settings-label">URL de l'Agent API</label>
+              <input type="text" class="form-control-custom w-100" id="cfg-url" value="http://localhost:8000">
+            </div>
+            <div class="mb-3">
+              <label class="settings-label">Modèle Mistral</label>
+              <select class="settings-select"><option>mistral-large-latest</option><option>pixtral-large-latest</option><option>mistral-medium-latest</option></select>
+            </div>
+            <div class="mb-4">
+              <label class="settings-label">Seuil de recherche floue</label>
+              <select class="settings-select"><option>78% (recommandé)</option><option>70%</option><option>85%</option><option>90%</option></select>
+            </div>
+            <button class="btn-erp-primary w-100" onclick="showToast('Paramètres sauvegardés','success')"><i class="bi bi-floppy me-1"></i>Sauvegarder</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-main -->
+
+  <div class="dash-footer">
+    <a href="#">Conditions d'utilisation</a>
+    <a href="#">Notes de version</a>
+    <a href="#">Guide utilisateur</a>
+    <a href="#">Support</a>
+    <span>© ERP-AI 2024</span>
+  </div>
+
+</div><!-- /page-dashboard -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = '';
+let currentUser = null, currentLic = null, allLogs = [], logFilter = 'ALL';
+const SECTION_TITLES = {home:'Accueil',profile:'Profil Utilisateur',licence:'Gestion Licence',users:'Gestion Utilisateurs',status:'État du Système',logs:'Journal d\'Activité',ai:'Services IA',settings:'Paramètres'};
+
+function showToast(msg, type='success') {
+  const icons = {success:'<i class="bi bi-check-circle-fill" style="color:var(--green)"></i>', error:'<i class="bi bi-x-circle-fill" style="color:var(--red)"></i>', info:'<i class="bi bi-info-circle-fill" style="color:var(--indigo)"></i>', warn:'<i class="bi bi-exclamation-triangle-fill" style="color:var(--orange)"></i>'};
+  const t = document.getElementById('toast');
+  t.className = `toast-custom show ${type}`;
+  t.innerHTML = `${icons[type]||icons.info}<span>${msg}</span>`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+}
+function navTo(sec) {
+  // ── Guard : sections réservées à l'admin ──
+  const adminOnly = ['licence', 'users'];
+  if (adminOnly.includes(sec) && (!currentUser || currentUser.role !== 'admin')) {
+    showToast('Accès refusé — Réservé aux administrateurs', 'error');
+    return;
+  }
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('sec-'+sec);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${sec}'`)) n.classList.add('active');
+  });
+  const tb = document.getElementById('tb-section');
+  if (tb) tb.textContent = SECTION_TITLES[sec] || sec;
+  if (sec === 'logs') loadLogs();
+  if (sec === 'users') loadUsers();
+  if (sec === 'licence') loadLicences();
+}
+function setProgress(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.width = pct + '%';
+  el.className = 'progress-bar ' + (pct < 60 ? 'green' : pct < 80 ? 'orange' : 'red');
+}
+
+
+
+function showLoginAlert(msg, type='error') {
+  const a = document.getElementById('login-alert');
+  a.className = `alert-custom ${type}`;
+  a.innerHTML = (type==='error'?'<i class="bi bi-exclamation-triangle-fill"></i> ':'<i class="bi bi-check-circle-fill"></i> ') + msg;
+}
+async function doLogin() {
+  const user = document.getElementById('inp-user').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+
+  const btn  = document.getElementById('btn-sign');
+
+  document.getElementById('login-alert').className = 'alert-custom hidden';
+
+  if (!user) return showLoginAlert('Identifiant requis');
+  if (!pass) return showLoginAlert('Mot de passe requis');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Vérification...';
+
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: user,
+        password: pass
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      currentUser = data.user;
+      showLoginAlert('Authentification réussie','success');
+      setTimeout(() => initDashboard(data), 800);
+    } else {
+      showLoginAlert(data.error || 'Erreur login');
+      btn.disabled = false;
+      btn.textContent = 'SE CONNECTER';
+    }
+
+  } catch (e) {
+    showLoginAlert('Erreur serveur');
+    btn.disabled = false;
+    btn.textContent = 'SE CONNECTER';
+  }
+}
+
+function initDashboard(data) {
+  const u = data.user; const l = data.licence;
+  currentUser = u; currentLic = l;
+  const initials = (u.fullname||u.username).split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('tb-av').textContent    = initials;
+  document.getElementById('tb-uname').textContent = u.username;
+  document.getElementById('sb-av').textContent    = initials;
+  document.getElementById('sb-uname').textContent = u.fullname || u.username;
+  document.getElementById('sb-role').textContent  = u.role==='admin'?'Administrateur':u.role==='operator'?'Opérateur':'Lecteur';
+  document.getElementById('welcome-name').textContent = u.fullname || u.username;
+  document.getElementById('welcome-role').textContent = `${u.role==='admin'?'Administrateur':u.role} · Licence ${l?l.owner:'Active'} · ${new Date().toLocaleDateString('fr-FR')}`;
+  document.getElementById('p-user').textContent  = u.username;
+  document.getElementById('p-email').textContent = u.email||`${u.username}@erp-ai.local`;
+  document.getElementById('p-name').textContent  = u.fullname||u.username;
+  document.getElementById('p-role').textContent  = u.role;
+  document.getElementById('p-last').textContent  = new Date().toLocaleString('fr-FR');
+  const isAdmin = u.role==='admin', isOp = u.role==='operator'||isAdmin;
+  document.getElementById('perm-upload').innerHTML = isOp ?'<span class="badge-green">Autorisé</span>':'<span class="badge-red">Refusé</span>';
+  document.getElementById('perm-ctrl').innerHTML   = isAdmin?'<span class="badge-green">Autorisé</span>':'<span class="badge-red">Refusé</span>';
+  document.getElementById('perm-users').innerHTML  = isAdmin?'<span class="badge-green">Autorisé</span>':'<span class="badge-red">Refusé</span>';
+
+  // ── Masquer les items admin-only si non-admin ──
+  const adminItems = ['sb-nav-licence', 'sb-nav-users'];
+  adminItems.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? 'flex' : 'none';
+  });
+  if (l) {
+    document.getElementById('lic-key-disp').textContent = l.key||'ERP-AI-2024-DEMO-YYYY';
+    document.getElementById('lic-type').textContent  = l.owner;
+    document.getElementById('lic-owner').textContent = u.fullname||u.username;
+    document.getElementById('lic-exp').textContent   = l.expires||'2099-12-31';
+  }
+  showPage('dashboard');
+  refreshAll(); loadLogs(); loadStats();
+  setInterval(() => { refreshAll(); loadLogs(); }, 30000);
+}
+
+async function refreshAll() {
+  document.getElementById('last-refresh').textContent = 'Actualisé à ' + new Date().toLocaleTimeString('fr-FR');
+  try {
+    const res = await fetch(`${API}/api/system/status`,{credentials:'include'});
+    const data = await res.json();
+    if (!data.success) return;
+    const {server, database, api_ia} = data;
+    const dbOk = database.status==='online', apiOk = api_ia.status==='online';
+    ['db-status','s2-db'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML = dbOk?'<div class="dot green"></div><span style="color:var(--green)">CONNECTÉ</span>':'<div class="dot red"></div><span style="color:var(--red)">HORS LIGNE</span>'; });
+    ['erp-conn','s2-erp'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML = apiOk?'<div class="dot green"></div><span style="color:var(--green)">CONNECTÉ</span>':'<div class="dot red"></div><span style="color:var(--red)">HORS LIGNE</span>'; });
+    ['r-cpu','s2-cpu'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=server.cpu+'%'; });
+    ['r-mem','s2-mem'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=server.memory+'%'; });
+    ['r-disk','s2-disk'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=server.disk+'%'; });
+    ['r-os','s2-os'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=server.os; });
+    setProgress('b-cpu',server.cpu); setProgress('s2-bcpu',server.cpu);
+    setProgress('b-mem',server.memory); setProgress('s2-bmem',server.memory);
+    setProgress('b-disk',server.disk); setProgress('s2-bdisk',server.disk);
+  } catch(e) {
+    const vals = {cpu:Math.floor(Math.random()*30+10), mem:Math.floor(Math.random()*30+35), disk:42};
+    ['r-cpu','s2-cpu'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=vals.cpu+'%'; });
+    ['r-mem','s2-mem'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=vals.mem+'%'; });
+    ['r-disk','s2-disk'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=vals.disk+'%'; });
+    ['r-os','s2-os'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='Windows / Ubuntu Server (démo)'; });
+    setProgress('b-cpu',vals.cpu); setProgress('s2-bcpu',vals.cpu);
+    setProgress('b-mem',vals.mem); setProgress('s2-bmem',vals.mem);
+    setProgress('b-disk',vals.disk); setProgress('s2-bdisk',vals.disk);
+    ['db-status','s2-db'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML='<div class="dot orange"></div><span style="color:var(--orange)">DÉMO</span>'; });
+  }
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/api/stats`,{credentials:'include'});
+    const d = await res.json();
+    if (d.success) {
+      document.getElementById('st-total').textContent = d.total_invoices;
+      document.getElementById('st-today').textContent = d.today_invoices;
+      document.getElementById('st-rev').textContent   = Number(d.total_revenue).toLocaleString('fr-FR',{maximumFractionDigits:0});
+      document.getElementById('perf-total').textContent = d.total_invoices;
+      document.getElementById('ai-ext-count').textContent = d.total_invoices;
+      document.getElementById('lic-invoices').textContent = `${d.total_invoices} / ∞`;
+    }
+  } catch(e) {
+    document.getElementById('st-total').textContent = '3';
+    document.getElementById('st-today').textContent = '1';
+    document.getElementById('st-rev').textContent   = '4 982';
+    document.getElementById('perf-total').textContent = '3';
+    document.getElementById('ai-ext-count').textContent = '3';
+  }
+}
+
+const DEMO_LOGS = [
+  {ts:'10:22:01',lvl:'INFO',   msg:'ERP-AI System démarré avec succès'},
+  {ts:'10:22:02',lvl:'INFO',   msg:'Base de données MySQL connectée — invoices_db'},
+  {ts:'10:22:03',lvl:'INFO',   msg:'Agent d\'extraction initialisé — mistral-large-latest'},
+  {ts:'10:22:04',lvl:'INFO',   msg:'Agent de recherche initialisé — RapidFuzz + Mistral'},
+  {ts:'10:22:10',lvl:'INFO',   msg:'Connexion réussie : admin (licence: Demo)'},
+  {ts:'10:23:15',lvl:'INFO',   msg:'Interface ERP démarrée'},
+  {ts:'10:24:00',lvl:'INFO',   msg:'Facture traitée : INV-2026-001 — Tech Store Tunisia'},
+  {ts:'10:24:05',lvl:'INFO',   msg:'Recherche : "tech store" → 1 résultat (partiel 85%)'},
+  {ts:'10:25:30',lvl:'WARNING',msg:'Rate limit Mistral — attente 3s (tentative 1/4)'},
+  {ts:'10:25:33',lvl:'INFO',   msg:'Recherche complétée après retry'},
+  {ts:'10:26:00',lvl:'INFO',   msg:'Facture traitée : INV-2025-0458 — TECH SOLUTIONS'},
+  {ts:'10:27:10',lvl:'INFO',   msg:'Recherche fournisseur : "ABC Rénovations" → fuzzy 91%'},
+];
+
+async function loadLogs() {
+  try {
+    const res = await fetch(`${API}/api/system/logs?limit=50`,{credentials:'include'});
+    const d = await res.json();
+    if (d.success) { allLogs = d.logs; renderLogs(); return; }
+  } catch(e) {}
+  allLogs = DEMO_LOGS; renderLogs();
+}
+function renderLogs() {
+  const filtered = logFilter==='ALL' ? allLogs : allLogs.filter(l => (l.level||l.lvl)===logFilter);
+  const html = filtered.map(l => {
+    const ts  = l.ts||(l.created_at?new Date(l.created_at).toLocaleTimeString('fr-FR'):'—');
+    const lvl = l.level||l.lvl||'INFO';
+    const msg = l.message||l.msg||'';
+    return `<div class="log-line"><span class="log-ts">${ts}</span><span class="log-${lvl} ms-2">${lvl}</span><span class="log-msg ms-2">${msg}</span></div>`;
+  }).join('');
+  ['home-logs','full-logs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = html||'<div class="log-line"><span class="log-msg" style="color:#475569">Aucun log disponible</span></div>'; el.scrollTop = 0; }
+  });
+}
+function filterLogs(f) { logFilter = f; renderLogs(); }
+function clearLogs()   { allLogs = []; renderLogs(); showToast('Logs effacés','info'); }
+
+async function sysCtrl(action) {
+  showToast({start:'Démarrage du système...',stop:'Arrêt du système...',restart:'Redémarrage API...'}[action],'info');
+  try {
+    const res = await fetch(`${API}/api/system/control`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
+    const d = await res.json();
+    showToast(d.success?d.message:d.error, d.success?'success':'error');
+    if (d.success) setTimeout(refreshAll, 1500);
+  } catch(e) { showToast(`Action "${action}" — mode démo`,'warn'); }
+}
+
+function launchERP() {
+  showToast('Ouverture de l\'interface ERP...','info');
+  setTimeout(() => { window.open(document.getElementById('cfg-url')?.value||'http://localhost:8001','_blank'); }, 800);
+}
+function copyUrl() {
+  navigator.clipboard.writeText(document.getElementById('api-url-home')?.textContent||'http://localhost:8000').then(() => showToast('URL copiée !','success'));
+}
+async function doLogout() {
+    try {
+        const response = await fetch(
+            `${API}/api/auth/logout`,
+            {
+                method: 'POST',
+                credentials: 'include'
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentUser = null;
+
+            document.getElementById('inp-pass').value = '';
+            document.getElementById('login-alert').className =
+                'alert-custom hidden';
+
+            document.getElementById('btn-sign').disabled = false;
+            document.getElementById('btn-sign').textContent =
+                'SE CONNECTER';
+
+            showPage('login');
+            showToast('Déconnecté avec succès', 'success');
+        }
+    }
+    catch (e) {
+        console.error(e);
+        alert('Erreur de déconnexion');
+    }
+}
+
+
+
+// ══════════════════════════════════════════
+// GESTION LICENCES
+// ══════════════════════════════════════════
+let allLicences = [], licEditMode = false;
+
+async function loadLicences() {
+  try {
+    const r = await fetch(`${API}/api/licences`, { credentials: 'include' });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    allLicences = d.licences;
+  } catch(e) {
+    allLicences = [
+      { id:1, company_name:'Tech Solutions SARL', username:'admin', licence_key:'ERP-AI-2025-DEMO-0001', status:'active', start_date:'2025-01-01', end_date:'2027-06-15', max_users:5 },
+      { id:2, company_name:'Min Admin', username:'superadmin', licence_key:'ERP-MIN-LIC-2030-XXXX', status:'active', start_date:'2024-06-01', end_date:'2030-12-31', max_users:10 },
+    ];
+  }
+  renderLicTable(allLicences);
+  updateLicStats(allLicences);
+  // also refresh the licence select for users
+  allLicencesForUsers = allLicences;
+  const sel = document.getElementById('u-licence');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Aucune —</option>';
+    allLicences.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.id; o.textContent = `${l.company_name} (${l.licence_key})`;
+      sel.appendChild(o);
+    });
+  }
+}
+
+function updateLicStats(data) {
+  const active  = data.filter(l => l.status === 'active' && new Date(l.end_date) >= new Date()).length;
+  const expired = data.filter(l => new Date(l.end_date) < new Date()).length;
+  const blocked = data.filter(l => l.status === 'blocked').length;
+  const el = id => document.getElementById(id);
+  if (el('ls-total'))   el('ls-total').textContent   = data.length;
+  if (el('ls-active'))  el('ls-active').textContent  = active;
+  if (el('ls-expired')) el('ls-expired').textContent = expired;
+  if (el('ls-blocked')) el('ls-blocked').textContent = blocked;
+}
+
+function filterLicTable() {
+  const q = (document.getElementById('licSearchInput')?.value || '').toLowerCase();
+  const filtered = allLicences.filter(l =>
+    (l.company_name||'').toLowerCase().includes(q) ||
+    (l.licence_key||'').toLowerCase().includes(q) ||
+    (l.username||'').toLowerCase().includes(q) ||
+    (l.status||'').toLowerCase().includes(q)
+  );
+  renderLicTable(filtered);
+}
+
+function renderLicTable(data) {
+  const tbody = document.getElementById('licencesTable');
+  if (!tbody) return;
+  const countEl = document.getElementById('lic-count');
+  if (countEl) countEl.textContent = `(${data.length} résultat${data.length !== 1 ? 's' : ''})`;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="bi bi-key"></i><p>Aucune licence trouvée</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(l => {
+    const badge = licStatusBadge(l.status);
+    const expired = l.end_date && new Date(l.end_date) < new Date();
+    return `<tr>
+      <td style="color:var(--text-soft);font-size:12px">#${l.id}</td>
+      <td><div style="font-weight:600;color:#1A2340">${licEsc(l.company_name)}</div></td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--indigo-pale);color:var(--indigo);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${(l.username||'?').charAt(0).toUpperCase()}</div>
+        <span style="font-size:13px;color:#4A5578">${licEsc(l.username || '—')}</span>
+      </div></td>
+      <td><span class="key-mono">${licEsc(l.licence_key)}</span></td>
+      <td>${badge}</td>
+      <td style="color:var(--text-soft);font-size:12px">${licFmt(l.start_date)}</td>
+      <td style="font-size:12px;color:${expired ? 'var(--red)' : 'var(--text-soft)'};font-weight:${expired?'600':'400'}">${licFmt(l.end_date)}${expired ? ' <i class="bi bi-exclamation-triangle-fill"></i>' : ''}</td>
+      <td><span style="font-size:13px;font-weight:600;color:#1A2340">${l.max_users || '—'}</span> <span style="font-size:11px;color:var(--text-soft)">utilisateurs</span></td>
+      <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+        <button class="btn-erp-orange" onclick="copyLicKey('${licEsc(l.licence_key)}')" title="Copier la clé"><i class="bi bi-copy"></i></button>
+        <button class="btn-erp-green" onclick="openEditLicModal(${l.id})" title="Modifier"><i class="bi bi-pencil-fill"></i> Modifier</button>
+        <button class="btn-erp-red" onclick="deleteLicence(${l.id})" title="Supprimer"><i class="bi bi-trash-fill"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openCreateLicModal() {
+  licEditMode = false;
+  document.getElementById('lic-edit-id').value = '';
+  document.getElementById('lic-modal-title').textContent = 'Nouvelle Licence';
+  document.getElementById('lic-modal-subtitle').textContent = 'Remplissez les informations ci-dessous';
+  document.getElementById('lic-modal-save-btn').innerHTML = '<i class="bi bi-check-lg"></i> Enregistrer';
+  document.getElementById('lf-company').value = '';
+  document.getElementById('lf-key').value = '';
+  document.getElementById('lf-users').value = '1';
+  document.getElementById('lf-status').value = 'active';
+  document.getElementById('lf-start').value = new Date().toISOString().split('T')[0];
+  const d = new Date(); d.setFullYear(d.getFullYear() + 1);
+  document.getElementById('lf-end').value = d.toISOString().split('T')[0];
+  hideLicModalAlert();
+  generateLicKey();
+  new bootstrap.Modal(document.getElementById('licenceModal')).show();
+}
+
+function openEditLicModal(id) {
+  const l = allLicences.find(x => x.id === id);
+  if (!l) return;
+  licEditMode = true;
+  document.getElementById('lic-edit-id').value = l.id;
+  document.getElementById('lic-modal-title').textContent = 'Modifier la Licence';
+  document.getElementById('lic-modal-subtitle').textContent = `Édition de ${l.company_name}`;
+  document.getElementById('lic-modal-save-btn').innerHTML = '<i class="bi bi-pencil-fill"></i> Mettre à jour';
+  document.getElementById('lf-company').value = l.company_name || '';
+  document.getElementById('lf-key').value = l.licence_key || '';
+  document.getElementById('lf-users').value = l.max_users || 1;
+  document.getElementById('lf-status').value = l.status || 'active';
+  document.getElementById('lf-start').value = (l.start_date||'').split('T')[0];
+  document.getElementById('lf-end').value = (l.end_date||'').split('T')[0];
+  hideLicModalAlert();
+  new bootstrap.Modal(document.getElementById('licenceModal')).show();
+}
+
+async function saveLicence() {
+  const company = document.getElementById('lf-company').value.trim();
+  const key     = document.getElementById('lf-key').value.trim();
+  const start   = document.getElementById('lf-start').value;
+  const end     = document.getElementById('lf-end').value;
+  const users   = document.getElementById('lf-users').value;
+  const status  = document.getElementById('lf-status').value;
+  const id      = document.getElementById('lic-edit-id').value;
+  if (!company || !key || !start || !end) return showLicModalAlert('Veuillez remplir tous les champs obligatoires.');
+  if (new Date(end) < new Date(start)) return showLicModalAlert('La date de fin doit être postérieure à la date de début.');
+  const btn = document.getElementById('lic-modal-save-btn');
+  btn.innerHTML = '<span class="spin"></span> Enregistrement...'; btn.disabled = true;
+  try {
+    const payload = { company_name: company, licence_key: key, start_date: start, end_date: end, max_users: parseInt(users), status };
+    const method = licEditMode ? 'PUT' : 'POST';
+    const url = licEditMode ? `${API}/api/licences/${id}` : `${API}/api/licences`;
+    const r = await fetch(url, { method, credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Erreur serveur');
+    bootstrap.Modal.getInstance(document.getElementById('licenceModal')).hide();
+    showToast(licEditMode ? 'Licence mise à jour ✓' : 'Licence créée ✓', 'success');
+    loadLicences();
+  } catch(e) { showLicModalAlert(e.message); }
+  finally {
+    btn.innerHTML = licEditMode ? '<i class="bi bi-pencil-fill"></i> Mettre à jour' : '<i class="bi bi-check-lg"></i> Enregistrer';
+    btn.disabled = false;
+  }
+}
+
+async function deleteLicence(id) {
+  const l = allLicences.find(x => x.id === id);
+  document.getElementById('lic-confirm-detail').textContent = l?.company_name || `Licence #${id}`;
+  document.getElementById('lic-confirm-ok').onclick = async () => {
+    try {
+      const r = await fetch(`${API}/api/licences/${id}`, { method:'DELETE', credentials:'include' });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      closeLicConfirm(); showToast('Licence supprimée', 'error'); loadLicences();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+  };
+  const bd = document.getElementById('licConfirmBackdrop');
+  bd.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => bd.classList.add('show')));
+}
+function closeLicConfirm() {
+  const bd = document.getElementById('licConfirmBackdrop');
+  bd.classList.remove('show');
+  setTimeout(() => { bd.style.display = 'none'; }, 220);
+}
+
+function generateLicKey() {
+  const seg = () => Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').substring(0,4).padEnd(4,'X');
+  document.getElementById('lf-key').value = `ERP-AI-${seg()}-${seg()}-${seg()}-${seg()}`;
+}
+function copyLicKey(key) {
+  navigator.clipboard.writeText(key).then(() => showToast('Clé copiée !', 'success'));
+}
+function licStatusBadge(s) {
+  if (s === 'active')  return '<span class="badge-green"><i class="bi bi-check-circle-fill me-1"></i>Active</span>';
+  if (s === 'blocked') return '<span class="badge-orange"><i class="bi bi-slash-circle-fill me-1"></i>Bloquée</span>';
+  if (s === 'expired') return '<span class="badge-red"><i class="bi bi-clock-history me-1"></i>Expirée</span>';
+  return `<span class="badge-gray">${s}</span>`;
+}
+function licFmt(d) {
+  if (!d) return '—';
+  const dd = new Date(d);
+  return isNaN(dd) ? d : dd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+function licEsc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showLicModalAlert(msg) {
+  document.getElementById('lic-modal-alert-text').textContent = msg;
+  document.getElementById('lic-modal-alert').style.display = 'block';
+}
+function hideLicModalAlert() { document.getElementById('lic-modal-alert').style.display = 'none'; }
+
+// ══════════════════════════════════════════
+// GESTION UTILISATEURS
+// ══════════════════════════════════════════
+let allUsers = [], allLicencesForUsers = [], userEditMode = false, activeUserFilter = 'all';
+
+async function loadUsers() {
+  try {
+    const r = await fetch(`${API}/api/users`, { credentials: 'include' });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    allUsers = d.users;
+  } catch(e) {
+    allUsers = [
+      { id:1, username:'admin', fullname:'Administrateur ERP-AI', email:'admin@erp-ai.local', role:'admin', is_active:1, license_id:1, company_name:'Tech Solutions SARL', last_login:'2026-06-14T08:22:01', created_at:'2024-01-01T00:00:00' },
+      { id:2, username:'operateur1', fullname:'Mohamed Ben Ali', email:'m.benali@erp-ai.local', role:'operator', is_active:1, license_id:1, company_name:'Tech Solutions SARL', last_login:'2026-06-13T14:10:00', created_at:'2024-03-15T00:00:00' },
+      { id:3, username:'viewer1', fullname:'Sonia Mansouri', email:'s.mansouri@erp-ai.local', role:'viewer', is_active:1, license_id:null, company_name:null, last_login:null, created_at:'2024-06-01T00:00:00' },
+      { id:4, username:'olduser', fullname:'Ancien Compte', email:'old@erp-ai.local', role:'operator', is_active:0, license_id:null, company_name:null, last_login:'2025-01-01T09:00:00', created_at:'2023-11-01T00:00:00' },
+    ];
+  }
+  updateUserStats();
+  applyUserFilters();
+  loadLicencesForUsers();
+}
+
+async function loadLicencesForUsers() {
+  // Reuse allLicences if already loaded, otherwise fetch
+  if (!allLicencesForUsers.length && allLicences.length) {
+    allLicencesForUsers = allLicences;
+  } else {
+    try {
+      const r = await fetch(`${API}/api/licences`, { credentials: 'include' });
+      const d = await r.json();
+      if (d.success) allLicencesForUsers = d.licences;
+    } catch(e) { allLicencesForUsers = allLicences; }
+  }
+  const sel = document.getElementById('u-licence');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Aucune —</option>';
+  allLicencesForUsers.forEach(l => {
+    const o = document.createElement('option');
+    o.value = l.id; o.textContent = `${l.company_name} (${l.licence_key})`;
+    sel.appendChild(o);
+  });
+}
+
+function updateUserStats() {
+  const el = id => document.getElementById(id);
+  if (el('us-total'))    el('us-total').textContent    = allUsers.length;
+  if (el('us-active'))   el('us-active').textContent   = allUsers.filter(u => u.is_active).length;
+  if (el('us-admin'))    el('us-admin').textContent    = allUsers.filter(u => u.role === 'admin').length;
+  if (el('us-inactive')) el('us-inactive').textContent = allUsers.filter(u => !u.is_active).length;
+}
+
+function setUserFilter(f, el) {
+  activeUserFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  applyUserFilters();
+}
+
+function applyUserFilters() {
+  const q = (document.getElementById('userSearchInput')?.value || '').toLowerCase();
+  let data = [...allUsers];
+  if (activeUserFilter === 'active')   data = data.filter(u => u.is_active);
+  if (activeUserFilter === 'inactive') data = data.filter(u => !u.is_active);
+  if (activeUserFilter === 'admin')    data = data.filter(u => u.role === 'admin');
+  if (q) data = data.filter(u =>
+    (u.username||'').toLowerCase().includes(q) ||
+    (u.fullname||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q) ||
+    (u.role||'').toLowerCase().includes(q) ||
+    (u.company_name||'').toLowerCase().includes(q)
+  );
+  renderUsersTable(data);
+}
+
+function userEsc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function userFmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function userTimeAgo(d) {
+  const diff = Date.now() - new Date(d).getTime();
+  const m = Math.floor(diff/60000), h = Math.floor(m/60), j = Math.floor(h/24);
+  if (j > 0) return `il y a ${j}j`;
+  if (h > 0) return `il y a ${h}h`;
+  if (m > 0) return `il y a ${m}min`;
+  return 'à l\'instant';
+}
+function userAvatarInitials(u) {
+  const name = u.fullname || u.username || '?';
+  return name.trim().split(' ').map(w => w[0]).join('').toUpperCase().substring(0,2) || '?';
+}
+function userRoleBadge(role) {
+  const map = {
+    admin:    '<span class="badge-purple"><i class="bi bi-shield-fill-check me-1"></i>Admin</span>',
+    operator: '<span class="badge-indigo"><i class="bi bi-tools me-1"></i>Opérateur</span>',
+    viewer:   '<span class="badge-gray"><i class="bi bi-eye-fill me-1"></i>Lecteur</span>',
+  };
+  return map[role] || `<span class="badge-gray">${role}</span>`;
+}
+
+function renderUsersTable(data) {
+  const countEl = document.getElementById('user-count');
+  if (countEl) countEl.textContent = `(${data.length} résultat${data.length!==1?'s':''})`;
+  const tbody = document.getElementById('usersTable');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-people"></i><p>Aucun utilisateur trouvé</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(u => {
+    const initials = userAvatarInitials(u);
+    const avatarClass = { admin:'avatar-admin', operator:'avatar-operator', viewer:'avatar-viewer' }[u.role] || 'avatar-operator';
+    const roleBadge = userRoleBadge(u.role);
+    const statusBadge = u.is_active
+      ? '<span class="badge-green"><i class="bi bi-circle-fill me-1" style="font-size:7px"></i>Actif</span>'
+      : '<span class="badge-red"><i class="bi bi-circle-fill me-1" style="font-size:7px"></i>Désactivé</span>';
+    const company = u.company_name
+      ? `<span class="badge-indigo" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">${userEsc(u.company_name)}</span>`
+      : `<span style="font-size:12px;color:var(--text-soft);font-style:italic">Non assignée</span>`;
+    const lastLogin = u.last_login
+      ? `<div class="last-login">${userFmtDate(u.last_login)}</div><div style="font-size:10px;color:var(--text-soft)">${userTimeAgo(u.last_login)}</div>`
+      : `<div class="last-login never">Jamais connecté</div>`;
+    return `<tr class="${!u.is_active ? 'table-erp-inactive' : ''}">
+      <td style="color:var(--text-soft);font-size:12px">#${u.id}</td>
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar ${avatarClass}">${initials}</div>
+        <div><div style="font-weight:600;color:#1A2340">${userEsc(u.fullname || u.username)}</div>
+        <div style="font-size:11px;color:var(--text-soft)">@${userEsc(u.username)}</div></div>
+      </div></td>
+      <td style="color:#4A5578;font-size:12px">${userEsc(u.email)}</td>
+      <td>${roleBadge}</td>
+      <td>${company}</td>
+      <td>${statusBadge}</td>
+      <td>${lastLogin}</td>
+      <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:5px">
+        <button class="btn-erp-outline" style="padding:5px 10px;font-size:12px" onclick="openUserDetailModal(${u.id})" title="Voir"><i class="bi bi-eye-fill"></i></button>
+        <button class="btn-erp-green" onclick="openEditUserModal(${u.id})" title="Modifier"><i class="bi bi-pencil-fill"></i> Modifier</button>
+        <button class="btn-erp-orange" onclick="toggleUserActive(${u.id})" title="${u.is_active ? 'Désactiver' : 'Activer'}"><i class="bi bi-${u.is_active ? 'person-slash' : 'person-check'}-fill"></i></button>
+        <button class="btn-erp-red" onclick="deleteUserRow(${u.id})" title="Supprimer"><i class="bi bi-trash3-fill"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openCreateUserModal() {
+  userEditMode = false;
+  document.getElementById('u-edit-id').value = '';
+  document.getElementById('umodal-title').textContent = 'Nouvel utilisateur';
+  document.getElementById('umodal-subtitle').textContent = 'Créer un nouveau compte';
+  document.getElementById('umodal-save-btn').innerHTML = '<i class="bi bi-person-plus-fill"></i> Créer';
+  ['u-fullname','u-username','u-email','u-password'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('u-role').value = 'operator';
+  document.getElementById('u-licence').value = '';
+  document.getElementById('u-active').checked = true;
+  document.getElementById('u-pass-label').innerHTML = 'Mot de passe <span style="color:var(--red)">*</span>';
+  document.getElementById('u-edit-pass-note').style.display = 'none';
+  document.getElementById('u-password').placeholder = '••••••••';
+  resetUserPassStrength(); hideUserModalAlert(); updateUserPreview();
+  new bootstrap.Modal(document.getElementById('userModal')).show();
+}
+
+function openEditUserModal(id) {
+  const u = allUsers.find(x => x.id === id);
+  if (!u) return;
+  userEditMode = true;
+  document.getElementById('u-edit-id').value = u.id;
+  document.getElementById('umodal-title').textContent = 'Modifier l\'utilisateur';
+  document.getElementById('umodal-subtitle').textContent = `Édition de @${u.username}`;
+  document.getElementById('umodal-save-btn').innerHTML = '<i class="bi bi-pencil-fill"></i> Mettre à jour';
+  document.getElementById('u-fullname').value = u.fullname || '';
+  document.getElementById('u-username').value = u.username;
+  document.getElementById('u-email').value = u.email;
+  document.getElementById('u-password').value = '';
+  document.getElementById('u-role').value = u.role;
+  document.getElementById('u-licence').value = u.license_id || '';
+  document.getElementById('u-active').checked = !!u.is_active;
+  document.getElementById('u-pass-label').innerHTML = 'Nouveau mot de passe';
+  document.getElementById('u-edit-pass-note').style.display = 'flex';
+  document.getElementById('u-password').placeholder = 'Laisser vide pour ne pas changer';
+  resetUserPassStrength(); hideUserModalAlert();
+  const dm = bootstrap.Modal.getInstance(document.getElementById('userDetailModal'));
+  if (dm) dm.hide();
+  updateUserPreview();
+  new bootstrap.Modal(document.getElementById('userModal')).show();
+}
+
+function openUserDetailModal(id) {
+  const u = allUsers.find(x => x.id === id);
+  if (!u) return;
+  const initials = userAvatarInitials(u);
+  const ac = { admin:'avatar-admin', operator:'avatar-operator', viewer:'avatar-viewer' }[u.role] || 'avatar-operator';
+  const licKey = allLicencesForUsers.find(l => l.id == u.license_id)?.licence_key || '—';
+  document.getElementById('user-detail-body').innerHTML = `
+    <div class="text-center mb-4">
+      <div class="user-avatar ${ac}" style="width:60px;height:60px;font-size:20px;margin:0 auto 12px">${initials}</div>
+      <div style="font-size:17px;font-weight:700;color:#1A2340">${userEsc(u.fullname || u.username)}</div>
+      <div style="font-size:13px;color:var(--text-soft)">@${userEsc(u.username)}</div>
+      <div class="mt-2">${userRoleBadge(u.role)}&nbsp;${u.is_active ? '<span class="badge-green">Actif</span>' : '<span class="badge-red">Désactivé</span>'}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      ${uDetailRow('bi-envelope-fill','Email',userEsc(u.email))}
+      ${uDetailRow('bi-building','Société',userEsc(u.company_name || 'Non assignée'))}
+      ${uDetailRow('bi-key-fill','Clé licence',`<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--indigo)">${userEsc(licKey)}</span>`)}
+      ${uDetailRow('bi-clock-history','Dernière connexion', u.last_login ? userFmtDate(u.last_login)+' ('+userTimeAgo(u.last_login)+')' : '<span style="font-style:italic;color:var(--text-soft)">Jamais</span>')}
+      ${uDetailRow('bi-calendar3','Créé le',userFmtDate(u.created_at))}
+    </div>`;
+  document.getElementById('user-detail-edit-btn').onclick = () => openEditUserModal(id);
+  new bootstrap.Modal(document.getElementById('userDetailModal')).show();
+}
+function uDetailRow(icon, label, value) {
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+    <span style="color:var(--text-soft);display:flex;align-items:center;gap:6px"><i class="bi ${icon}"></i>${label}</span>
+    <span style="color:#1A2340;font-weight:600">${value}</span>
+  </div>`;
+}
+
+async function saveUser() {
+  const fullname  = document.getElementById('u-fullname').value.trim();
+  const username  = document.getElementById('u-username').value.trim();
+  const email     = document.getElementById('u-email').value.trim();
+  const password  = document.getElementById('u-password').value;
+  const role      = document.getElementById('u-role').value;
+  const licenceId = document.getElementById('u-licence').value;
+  const isActive  = document.getElementById('u-active').checked ? 1 : 0;
+  const id        = document.getElementById('u-edit-id').value;
+  if (!username) return showUserModalAlert('Le nom d\'utilisateur est obligatoire.');
+  if (!email)    return showUserModalAlert('L\'adresse e-mail est obligatoire.');
+  if (!userEditMode && !password) return showUserModalAlert('Le mot de passe est obligatoire pour un nouveau compte.');
+  if (password && password.length < 6) return showUserModalAlert('Le mot de passe doit contenir au moins 6 caractères.');
+  const btn = document.getElementById('umodal-save-btn');
+  btn.innerHTML = '<span class="spin"></span> Enregistrement...'; btn.disabled = true;
+  const payload = { username, email, fullname, role, is_active: isActive, license_id: licenceId || null };
+  if (password) payload.password = password;
+  try {
+    const method = userEditMode ? 'PUT' : 'POST';
+    const url = userEditMode ? `${API}/api/users/${id}` : `${API}/api/users`;
+    const r = await fetch(url, { method, credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Erreur serveur');
+    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+    showToast(userEditMode ? `@${username} mis à jour ✓` : `Compte @${username} créé ✓`, 'success');
+    loadUsers();
+  } catch(e) { showUserModalAlert(e.message); }
+  finally {
+    btn.innerHTML = userEditMode ? '<i class="bi bi-pencil-fill"></i> Mettre à jour' : '<i class="bi bi-person-plus-fill"></i> Créer';
+    btn.disabled = false;
+  }
+}
+
+async function toggleUserActive(id) {
+  const u = allUsers.find(x => x.id === id);
+  if (!u) return;
+  const newState = u.is_active ? 0 : 1;
+  try {
+    const r = await fetch(`${API}/api/users/${id}`, { method:'PUT', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...u, is_active: newState, license_id: u.license_id || null}) });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    showToast(newState ? `@${u.username} activé` : `@${u.username} désactivé`, newState ? 'success' : 'warn');
+    loadUsers();
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+function deleteUserRow(id) {
+  const u = allUsers.find(x => x.id === id);
+  document.getElementById('user-confirm-detail').textContent = `@${u?.username} — ${u?.fullname || u?.email}`;
+  document.getElementById('user-confirm-ok').onclick = async () => {
+    try {
+      const r = await fetch(`${API}/api/users/${id}`, { method:'DELETE', credentials:'include' });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      closeUserConfirm(); showToast(`@${u?.username} supprimé`, 'error'); loadUsers();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+  };
+  const bd = document.getElementById('userConfirmBackdrop');
+  bd.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => bd.classList.add('show')));
+}
+function closeUserConfirm() {
+  const bd = document.getElementById('userConfirmBackdrop');
+  bd.classList.remove('show');
+  setTimeout(() => { bd.style.display = 'none'; }, 220);
+}
+
+function updateUserPreview() {
+  const name = document.getElementById('u-fullname').value || document.getElementById('u-username').value || 'U';
+  const role = document.getElementById('u-role').value;
+  const initials = name.trim().split(' ').map(w => w[0]).join('').toUpperCase().substring(0,2) || 'U';
+  const cls = { admin:'avatar-admin', operator:'avatar-operator', viewer:'avatar-viewer' }[role] || 'avatar-operator';
+  const rl = { admin:'Administrateur', operator:'Opérateur', viewer:'Lecteur' }[role] || role;
+  document.getElementById('u-preview-avatar').className = `user-avatar ${cls}`;
+  document.getElementById('u-preview-avatar').textContent = initials;
+  document.getElementById('u-preview-name').textContent = name.trim() || 'Nouvel utilisateur';
+  document.getElementById('u-preview-role-label').textContent = rl;
+}
+function checkUserStrength() {
+  const v = document.getElementById('u-password').value;
+  const bars = ['upb1','upb2','upb3','upb4'].map(id => document.getElementById(id));
+  const label = document.getElementById('u-pass-strength-label');
+  if (!v) { resetUserPassStrength(); return; }
+  let score = 0;
+  if (v.length >= 6) score++;
+  if (v.length >= 10) score++;
+  if (/[A-Z]/.test(v) && /[0-9]/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v)) score++;
+  const levels = ['','weak','medium','strong','strong'];
+  const labels = ['','Faible','Moyen','Fort','Très fort'];
+  bars.forEach((b,i) => { b.className = 'pass-strength-bar'; if(i < score) b.classList.add(levels[score]); });
+  label.textContent = labels[score] || '';
+  label.style.color = ['','var(--red)','var(--orange)','var(--green)','var(--green)'][score];
+}
+function resetUserPassStrength() {
+  ['upb1','upb2','upb3','upb4'].forEach(id => { document.getElementById(id).className = 'pass-strength-bar'; });
+  document.getElementById('u-pass-strength-label').textContent = '';
+}
+function toggleUserPass() {
+  const inp = document.getElementById('u-password');
+  const ico = document.getElementById('u-pass-eye-icon');
+  if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash'; }
+  else { inp.type = 'password'; ico.className = 'bi bi-eye'; }
+}
+function showUserModalAlert(msg) {
+  document.getElementById('umodal-alert-text').textContent = msg;
+  document.getElementById('umodal-alert').style.display = 'block';
+}
+function hideUserModalAlert() { document.getElementById('umodal-alert').style.display = 'none'; }
+document.addEventListener('DOMContentLoaded', () => {
+  const um = document.getElementById('userModal');
+  if (um) um.addEventListener('show.bs.modal', hideUserModalAlert);
+});
+
+
+(async function() {
+  try {
+    const res = await fetch(`${API}/api/auth/me`,{credentials:'include'});
+    const d = await res.json();
+    if (d.success) {
+      currentUser = {username:d.username,fullname:d.username,email:`${d.username}@erp-ai.local`,role:d.role};
+      currentLic  = {owner:d.licence,expires:'2099-12-31',key:d.licence};
+      initDashboard({user:currentUser,licence:currentLic});
+    }
+  } catch(e) {}
+})();
+</script>
+<!-- ══ MODAL LICENCE ══ -->
+<div class="modal fade modal-custom" id="licenceModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered" style="max-width:520px">
+<div class="modal-content">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title-custom" id="lic-modal-title">Nouvelle Licence</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:2px" id="lic-modal-subtitle">Remplissez les informations ci-dessous</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="lic-edit-id">
+    <div class="mb-3">
+      <label class="form-label-custom">Société / Client</label>
+      <input type="text" class="form-control-custom" id="lf-company" placeholder="Ex : Tech Solutions SARL">
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Clé de licence</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-control-custom" id="lf-key" placeholder="ERP-AI-XXXX-XXXX-XXXX" style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px;flex:1">
+        <button class="btn-erp-outline" onclick="generateLicKey()" style="flex-shrink:0;padding:8px 14px"><i class="bi bi-shuffle"></i> Générer</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-soft);margin-top:5px"><i class="bi bi-info-circle"></i> Cliquez sur "Générer" pour créer une clé unique</div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Date de début</label>
+        <input type="date" class="form-control-custom" id="lf-start">
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Date de fin</label>
+        <input type="date" class="form-control-custom" id="lf-end">
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Nombre d'utilisateurs</label>
+        <input type="number" class="form-control-custom" id="lf-users" value="1" min="1">
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Statut</label>
+        <select class="form-control-custom" id="lf-status">
+          <option value="active">✅ Active</option>
+          <option value="blocked">🚫 Bloquée</option>
+          <option value="expired">⏱️ Expirée</option>
+        </select>
+      </div>
+    </div>
+    <div id="lic-modal-alert" style="display:none;background:var(--red-soft);color:var(--red);border:1px solid #f5b8b8;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:8px">
+      <i class="bi bi-exclamation-triangle me-2"></i><span id="lic-modal-alert-text"></span>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-erp-outline" data-bs-dismiss="modal">Annuler</button>
+    <button class="btn-erp-primary" id="lic-modal-save-btn" onclick="saveLicence()"><i class="bi bi-check-lg"></i> Enregistrer</button>
+  </div>
+</div></div></div>
+
+<!-- ══ CONFIRM SUPPRIMER LICENCE ══ -->
+<div class="confirm-backdrop" id="licConfirmBackdrop" style="display:none">
+  <div class="confirm-box">
+    <div class="confirm-icon-wrap"><i class="bi bi-trash3-fill"></i></div>
+    <div class="confirm-title">Supprimer la licence ?</div>
+    <div class="confirm-msg">Cette action est <strong>irréversible</strong>.<br>La licence sera définitivement supprimée.</div>
+    <div class="confirm-detail" id="lic-confirm-detail"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeLicConfirm()"><i class="bi bi-x-lg"></i> Annuler</button>
+      <button class="confirm-delete" id="lic-confirm-ok"><i class="bi bi-trash3-fill"></i> Oui, supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL UTILISATEUR ══ -->
+<div class="modal fade modal-custom" id="userModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered" style="max-width:540px">
+<div class="modal-content">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title-custom" id="umodal-title">Nouvel utilisateur</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:2px" id="umodal-subtitle">Remplissez les informations ci-dessous</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="u-edit-id">
+    <div class="d-flex align-items-center gap-3 mb-4 p-3" style="background:var(--offwhite);border-radius:12px;border:1px solid var(--border)">
+      <div class="user-avatar avatar-operator" id="u-preview-avatar" style="width:46px;height:46px;font-size:16px">U</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1A2340" id="u-preview-name">Nouvel utilisateur</div>
+        <div style="font-size:12px;color:var(--text-soft)" id="u-preview-role-label">Opérateur</div>
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Nom complet</label>
+        <input type="text" class="form-control-custom" id="u-fullname" placeholder="Jean Dupont" oninput="updateUserPreview()">
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Nom d'utilisateur <span style="color:var(--red)">*</span></label>
+        <input type="text" class="form-control-custom" id="u-username" placeholder="jean.dupont" oninput="updateUserPreview()">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Email <span style="color:var(--red)">*</span></label>
+      <div style="position:relative">
+        <input type="email" class="form-control-custom" id="u-email" placeholder="jean@entreprise.com" style="padding-left:38px">
+        <i class="bi bi-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-soft);font-size:14px"></i>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom" id="u-pass-label">Mot de passe <span style="color:var(--red)">*</span></label>
+      <div class="pass-wrap">
+        <input type="password" class="form-control-custom" id="u-password" placeholder="••••••••" oninput="checkUserStrength()">
+        <button class="pass-toggle" type="button" onclick="toggleUserPass()"><i class="bi bi-eye" id="u-pass-eye-icon"></i></button>
+      </div>
+      <div class="pass-strength" id="u-pass-bars">
+        <div class="pass-strength-bar" id="upb1"></div><div class="pass-strength-bar" id="upb2"></div>
+        <div class="pass-strength-bar" id="upb3"></div><div class="pass-strength-bar" id="upb4"></div>
+      </div>
+      <div class="pass-strength-label" id="u-pass-strength-label"></div>
+      <div id="u-edit-pass-note" style="display:none" class="info-box mt-2">
+        <i class="bi bi-info-circle-fill"></i> Laissez vide pour conserver le mot de passe actuel.
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Rôle <span style="color:var(--red)">*</span></label>
+        <select class="form-control-custom" id="u-role" onchange="updateUserPreview()">
+          <option value="operator">👷 Opérateur</option>
+          <option value="admin">🛡️ Administrateur</option>
+          <option value="viewer">👁️ Lecteur</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Société / Licence</label>
+        <select class="form-control-custom" id="u-licence"><option value="">— Aucune —</option></select>
+      </div>
+    </div>
+    <div class="mb-3 p-3" style="background:var(--offwhite);border-radius:10px;border:1px solid var(--border)">
+      <div class="toggle-switch justify-content-between">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1A2340">Compte actif</div>
+          <div style="font-size:11px;color:var(--text-soft)">L'utilisateur peut se connecter</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="u-active" checked><span class="switch-slider"></span></label>
+      </div>
+    </div>
+    <div id="umodal-alert" style="display:none;background:var(--red-soft);color:var(--red);border:1px solid #f5b8b8;border-radius:8px;padding:10px 14px;font-size:13px">
+      <i class="bi bi-exclamation-triangle me-2"></i><span id="umodal-alert-text"></span>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-erp-outline" data-bs-dismiss="modal">Annuler</button>
+    <button class="btn-erp-primary" id="umodal-save-btn" onclick="saveUser()"><i class="bi bi-check-lg"></i> Enregistrer</button>
+  </div>
+</div></div></div>
+
+<!-- ══ MODAL DETAIL UTILISATEUR ══ -->
+<div class="modal fade modal-custom" id="userDetailModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered" style="max-width:480px">
+<div class="modal-content">
+  <div class="modal-header">
+    <div class="modal-title-custom">Profil utilisateur</div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body" id="user-detail-body"></div>
+  <div class="modal-footer">
+    <button class="btn-erp-outline" data-bs-dismiss="modal">Fermer</button>
+    <button class="btn-erp-primary" id="user-detail-edit-btn"><i class="bi bi-pencil-fill"></i> Modifier</button>
+  </div>
+</div></div></div>
+
+<!-- ══ CONFIRM SUPPRIMER UTILISATEUR ══ -->
+<div class="confirm-backdrop" id="userConfirmBackdrop" style="display:none">
+  <div class="confirm-box">
+    <div class="confirm-icon-wrap"><i class="bi bi-person-x-fill"></i></div>
+    <div class="confirm-title">Supprimer l'utilisateur ?</div>
+    <div class="confirm-msg">Cette action est <strong>irréversible</strong>.<br>Le compte sera définitivement supprimé.</div>
+    <div class="confirm-detail" id="user-confirm-detail"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeUserConfirm()"><i class="bi bi-x-lg"></i> Annuler</button>
+      <button class="confirm-delete" id="user-confirm-ok"><i class="bi bi-trash3-fill"></i> Oui, supprimer</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

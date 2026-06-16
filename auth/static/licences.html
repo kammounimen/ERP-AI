@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP-AI — Gestion des Licences</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+:root {
+  --indigo:       #4B5EA6;
+  --indigo-dark:  #3A4D8F;
+  --indigo-light: #6B7FC4;
+  --indigo-pale:  #EEF0FA;
+  --sidebar-bg:   #1E2A4A;
+  --sidebar-w:    250px;
+  --topbar-h:     60px;
+  --green:        #2EAB6E;
+  --green-soft:   #E3F7EE;
+  --orange:       #E07C2E;
+  --orange-soft:  #FEF0E3;
+  --red:          #E04545;
+  --red-soft:     #FDE8E8;
+  --text-soft:    #8A95B0;
+  --border:       #DDE2EF;
+  --offwhite:     #F4F6FB;
+}
+* { font-family: 'Inter', sans-serif; }
+body { background: var(--offwhite); }
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1040;
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 8px rgba(30,42,74,.06);
+  display: flex; align-items: center; padding: 0 24px; gap: 14px;
+}
+.tb-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-light));
+  border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.tb-logo-name { font-size: 17px; font-weight: 700; color: #1A2340; letter-spacing: -.3px; }
+.tb-logo-name span { color: var(--indigo); }
+.tb-divider { width: 1px; height: 22px; background: var(--border); }
+.tb-breadcrumb { font-size: 12px; color: var(--text-soft); }
+.tb-breadcrumb strong { color: #4A5578; font-weight: 500; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 1030;
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sb-section { padding: 16px 0 6px; }
+.sb-section-label {
+  padding: 0 20px 8px;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: rgba(255,255,255,.28);
+}
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.6); cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .18s; text-decoration: none;
+}
+.sb-item i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.sb-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.92); }
+.sb-item.active { background: rgba(255,255,255,.12); color: #fff; border-left-color: #8BA3E8; font-weight: 600; }
+.sb-item.logout { color: rgba(252,129,129,.8); }
+.sb-item.logout:hover { color: #FC8181; background: rgba(252,129,129,.08); }
+.sb-divider { margin: 8px 20px; border-color: rgba(255,255,255,.07); }
+.sb-footer {
+  margin-top: auto; padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.sb-avatar-lg {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #5B73C8, #8BA3E8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.sb-uname { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
+.sb-role  { font-size: 11px; color: rgba(255,255,255,.38); }
+
+/* MAIN */
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 28px 32px;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+/* PAGE HEADER */
+.page-title { font-size: 21px; font-weight: 700; color: #1A2340; letter-spacing: -.4px; margin-bottom: 2px; }
+.breadcrumb-custom { font-size: 12px; color: var(--text-soft); }
+.breadcrumb-custom span { color: #4A5578; }
+
+/* CARD */
+.card { border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 6px rgba(30,42,74,.05); background: #fff; }
+
+/* STAT CARDS */
+.stat-card { border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; background: #fff; transition: all .2s; }
+.stat-card:hover { border-color: var(--indigo); box-shadow: 0 4px 18px rgba(75,94,166,.13); }
+.stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); }
+.stat-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.stat-icon.indigo { background: var(--indigo-pale); color: var(--indigo); }
+.stat-icon.green  { background: var(--green-soft);  color: var(--green); }
+.stat-icon.orange { background: var(--orange-soft); color: var(--orange); }
+.stat-icon.red    { background: var(--red-soft);    color: var(--red); }
+.stat-value { font-size: 28px; font-weight: 700; color: #1A2340; letter-spacing: -1px; }
+.stat-delta { font-size: 12px; color: var(--text-soft); }
+
+/* BADGES */
+.badge-green  { background: var(--green-soft);  color: #1a8050; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display:inline-block; }
+.badge-indigo { background: var(--indigo-pale); color: var(--indigo); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display:inline-block; }
+.badge-orange { background: var(--orange-soft); color: var(--orange); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display:inline-block; }
+.badge-red    { background: var(--red-soft);    color: var(--red); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display:inline-block; }
+.badge-gray   { background: #f0f1f5; color: var(--text-soft); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display:inline-block; }
+
+/* BUTTONS */
+.btn-erp-primary { background: var(--indigo); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba(75,94,166,.3); display:inline-flex; align-items:center; gap:6px; }
+.btn-erp-primary:hover { background: var(--indigo-dark); }
+.btn-erp-outline { background: white; color: #4A5578; border: 1px solid var(--border); border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; display:inline-flex; align-items:center; gap:6px; }
+.btn-erp-outline:hover { border-color: var(--indigo); color: var(--indigo); }
+.btn-erp-green  { background: var(--green-soft); color: #1a8050; border: 1px solid #b2e8cf; border-radius: 8px; padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; display:inline-flex; align-items:center; gap:5px; }
+.btn-erp-green:hover  { background: var(--green); color: white; border-color: var(--green); }
+.btn-erp-red    { background: var(--red-soft); color: var(--red); border: 1px solid #f5b8b8; border-radius: 8px; padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; display:inline-flex; align-items:center; gap:5px; }
+.btn-erp-red:hover    { background: var(--red); color: white; }
+.btn-erp-orange { background: var(--orange-soft); color: var(--orange); border: 1px solid #f8d5b2; border-radius: 8px; padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; display:inline-flex; align-items:center; gap:5px; }
+.btn-erp-orange:hover { background: var(--orange); color: white; }
+
+/* TABLE */
+.table-erp { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.table-erp thead th {
+  background: var(--offwhite); color: var(--text-soft);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.table-erp tbody tr { transition: background .15s; }
+.table-erp tbody tr:hover { background: var(--indigo-pale); }
+.table-erp tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: #1A2340; }
+.table-erp tbody tr:last-child td { border-bottom: none; }
+
+/* KEY */
+.key-mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--indigo); background: var(--indigo-pale); padding: 3px 8px; border-radius: 6px; letter-spacing: .5px; }
+
+/* SEARCH */
+.search-input {
+  border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px 8px 36px;
+  font-size: 13px; color: #1A2340; background: var(--offwhite);
+  transition: all .2s; outline: none; width: 220px;
+}
+.search-input:focus { border-color: var(--indigo); background: #fff; box-shadow: 0 0 0 3px rgba(75,94,166,.1); }
+.search-wrap { position: relative; }
+.search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-soft); font-size: 14px; }
+
+/* FORM */
+.form-label-custom { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: #4A5578; margin-bottom: 6px; display: block; }
+.form-control-custom {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; color: #1A2340; background: #F4F6FB;
+  transition: all .2s; width: 100%; outline: none;
+}
+.form-control-custom:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(75,94,166,.12); background: #fff; }
+.form-control-custom.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .5px; }
+.input-group-custom { display: flex; gap: 8px; }
+.input-group-custom .form-control-custom { flex: 1; }
+
+/* MODAL */
+.modal-custom .modal-content { border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 48px rgba(30,42,74,.18); }
+.modal-custom .modal-header { border-bottom: 1px solid var(--border); padding: 20px 24px; }
+.modal-custom .modal-body { padding: 24px; }
+.modal-custom .modal-footer { border-top: 1px solid var(--border); padding: 16px 24px; gap: 8px; }
+.modal-title-custom { font-size: 16px; font-weight: 700; color: #1A2340; }
+
+/* TOAST */
+.toast-container-custom { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+.toast-custom {
+  background: white; border: 1px solid var(--border); border-radius: 10px;
+  padding: 13px 18px; font-size: 13px; color: #1A2340;
+  box-shadow: 0 8px 32px rgba(30,42,74,.18);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(60px); opacity: 0; transition: all .25s;
+  min-width: 260px;
+}
+.toast-custom.show { transform: translateY(0); opacity: 1; }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 60px 0; color: var(--text-soft); }
+.empty-state i { font-size: 40px; opacity: .3; display: block; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; margin: 0; }
+
+/* LOADING */
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(75,94,166,.25); border-top-color: var(--indigo); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* CONFIRM DIALOG */
+.confirm-backdrop {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(15,22,45,0.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+  backdrop-filter: blur(2px);
+}
+.confirm-backdrop.show { opacity: 1; pointer-events: all; }
+.confirm-box {
+  background: #fff; border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 64px rgba(15,22,45,.22);
+  padding: 32px 28px 24px;
+  width: 100%; max-width: 400px;
+  transform: scale(.94) translateY(10px);
+  transition: transform .22s cubic-bezier(.34,1.3,.64,1), opacity .2s;
+  opacity: 0;
+}
+.confirm-backdrop.show .confirm-box { transform: scale(1) translateY(0); opacity: 1; }
+.confirm-icon-wrap {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--red-soft); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 24px; color: var(--red); margin: 0 auto 18px;
+}
+.confirm-title { font-size: 16px; font-weight: 700; color: #1A2340; text-align: center; margin-bottom: 8px; }
+.confirm-msg   { font-size: 13px; color: var(--text-soft); text-align: center; line-height: 1.6; margin-bottom: 6px; }
+.confirm-detail {
+  font-size: 12px; background: var(--offwhite); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; text-align: center;
+  font-family: 'Inter', sans-serif; color: #1A2340; font-weight: 600;
+  margin: 0 0 22px;
+}
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions button { flex: 1; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .18s; }
+.confirm-cancel { background: var(--offwhite); color: #4A5578; border: 1px solid var(--border) !important; }
+.confirm-cancel:hover { border-color: var(--indigo) !important; color: var(--indigo); }
+.confirm-delete { background: var(--red); color: #fff; box-shadow: 0 4px 14px rgba(224,69,69,.35); }
+.confirm-delete:hover { background: #c93333; transform: translateY(-1px); }
+.confirm-delete:active { transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ───────────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="tb-logo-icon"><i class="bi bi-cpu-fill"></i></div>
+  <div class="tb-logo-name">ERP<span>-AI</span></div>
+  <div class="tb-divider"></div>
+  <div class="tb-breadcrumb">Administration &rsaquo; <strong>Licences</strong></div>
+  <div class="ms-auto d-flex align-items-center gap-3">
+    <div style="font-size:12px;color:var(--text-soft)" id="last-refresh"></div>
+    <a href="/" class="btn-erp-outline" style="padding:6px 14px;font-size:12px;text-decoration:none">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+<div class="sidebar">
+    <div class="sb-header" style="padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:2px">Navigation</div>
+      <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.8)">ERP-AI Suite</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-section-label">Principal</div>
+      <a href="/" class="sb-item"><i class="bi bi-house-door"></i>Accueil<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+      <a href="/" class="sb-item"><i class="bi bi-person-circle"></i>Profil Utilisateur<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+      <a href="/licences" class="sb-item active"><i class="bi bi-key"></i>Gestion Licence<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.6"></i></a>
+      <a href="/users" class="sb-item"><i class="bi bi-people-fill"></i>Gestion Utilisateurs<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+    </div>
+    <div class="sb-section">
+      <div class="sb-section-label">Système</div>
+      <a href="/" class="sb-item"><i class="bi bi-activity"></i>État du Système<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+      <a href="/" class="sb-item"><i class="bi bi-terminal"></i>Journal d'Activité<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+      <a href="/" class="sb-item"><i class="bi bi-cpu"></i>Services IA<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+      <a href="/" class="sb-item"><i class="bi bi-sliders"></i>Paramètres<i class="bi bi-chevron-right" style="margin-left:auto;font-size:11px;opacity:.35"></i></a>
+    </div>
+    <hr class="sb-divider">
+    <a href="/" class="sb-item" style="color:#8BA3E8;font-weight:600"><i class="bi bi-box-arrow-up-right"></i>Lancer ERP</a>
+    <a href="/" class="sb-item" style="color:rgba(252,129,129,.8)"><i class="bi bi-box-arrow-left"></i>Déconnexion</a>
+    <div class="sb-footer">
+      <div class="d-flex align-items-center gap-2">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5B73C8,#8BA3E8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0" id="sb-avatar">A</div>
+        <div>
+          <div class="sb-uname" id="sb-uname">Admin</div>
+          <div class="sb-role">Administrateur</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Page header -->
+  <div class="d-flex align-items-start justify-content-between mb-4">
+    <div>
+      <div class="page-title"><i class="bi bi-key-fill me-2" style="color:var(--indigo)"></i>Gestion des Licences</div>
+      <div class="breadcrumb-custom mt-1">Administration &rsaquo; <span>Licences clients</span></div>
+    </div>
+    <button class="btn-erp-primary" onclick="openCreateModal()">
+      <i class="bi bi-plus-lg"></i> Nouvelle licence
+    </button>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="stat-label">Total licences</div>
+          <div class="stat-icon indigo"><i class="bi bi-key-fill"></i></div>
+        </div>
+        <div class="stat-value" id="s-total">—</div>
+        <div class="stat-delta mt-1">Toutes les licences</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="stat-label">Actives</div>
+          <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+        </div>
+        <div class="stat-value" id="s-active">—</div>
+        <div class="stat-delta mt-1">En cours de validité</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="stat-label">Expirées</div>
+          <div class="stat-icon red"><i class="bi bi-clock-history"></i></div>
+        </div>
+        <div class="stat-value" id="s-expired">—</div>
+        <div class="stat-delta mt-1">Renouvellement requis</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="stat-label">Bloquées</div>
+          <div class="stat-icon orange"><i class="bi bi-slash-circle-fill"></i></div>
+        </div>
+        <div class="stat-value" id="s-blocked">—</div>
+        <div class="stat-delta mt-1">Accès suspendu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="card">
+    <div class="p-4 border-bottom" style="border-color:var(--border)!important">
+      <div class="d-flex align-items-center justify-content-between">
+        <div style="font-size:14px;font-weight:700;color:#1A2340">
+          <i class="bi bi-table me-2" style="color:var(--indigo)"></i>Liste des licences
+          <span style="font-size:12px;font-weight:400;color:var(--text-soft)" class="ms-2" id="lic-count"></span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="search-wrap">
+            <i class="bi bi-search"></i>
+            <input class="search-input" type="text" placeholder="Rechercher..." id="searchInput" oninput="filterTable()">
+          </div>
+          <button class="btn-erp-outline" onclick="loadLicences()" title="Actualiser">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table-erp">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Société</th>
+            <th>Utilisateur</th>
+            <th>Clé de licence</th>
+            <th>Statut</th>
+            <th>Début</th>
+            <th>Fin</th>
+            <th>Utilisateurs</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="licencesTable">
+          <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--text-soft)">
+            <span class="spin"></span>&nbsp; Chargement...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── MODAL CRÉER / MODIFIER ────────────────────────────────────── -->
+<div class="modal fade modal-custom" id="licenceModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered" style="max-width:520px">
+<div class="modal-content">
+
+  <div class="modal-header">
+    <div>
+      <div class="modal-title-custom" id="modal-title">Nouvelle Licence</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:2px" id="modal-subtitle">Remplissez les informations ci-dessous</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+
+  <div class="modal-body">
+    <input type="hidden" id="edit-id">
+
+    <div class="mb-3">
+      <label class="form-label-custom">Société / Client</label>
+      <input type="text" class="form-control-custom" id="f-company" placeholder="Ex : Tech Solutions SARL">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label-custom">Clé de licence</label>
+      <div class="input-group-custom">
+        <input type="text" class="form-control-custom mono" id="f-key" placeholder="ERP-AI-XXXX-XXXX-XXXX">
+        <button class="btn-erp-outline" onclick="generateKey()" title="Générer automatiquement" style="flex-shrink:0;padding:8px 14px">
+          <i class="bi bi-shuffle"></i> Générer
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--text-soft);margin-top:5px">
+        <i class="bi bi-info-circle"></i> Cliquez sur "Générer" pour créer une clé unique automatiquement
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Date de début</label>
+        <input type="date" class="form-control-custom" id="f-start">
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Date de fin</label>
+        <input type="date" class="form-control-custom" id="f-end">
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label-custom">Nombre d'utilisateurs</label>
+        <input type="number" class="form-control-custom" id="f-users" value="1" min="1">
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom">Statut</label>
+        <select class="form-control-custom" id="f-status">
+          <option value="active">✅ Active</option>
+          <option value="blocked">🚫 Bloquée</option>
+          <option value="expired">⏱️ Expirée</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="modal-alert" style="display:none;background:var(--red-soft);color:var(--red);border:1px solid #f5b8b8;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:8px">
+      <i class="bi bi-exclamation-triangle me-2"></i><span id="modal-alert-text"></span>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-erp-outline" data-bs-dismiss="modal">Annuler</button>
+    <button class="btn-erp-primary" id="modal-save-btn" onclick="saveLicence()">
+      <i class="bi bi-check-lg"></i> Enregistrer
+    </button>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────────── -->
+<div class="toast-container-custom">
+  <div class="toast-custom" id="toast">
+    <span id="toast-icon"></span>
+    <span id="toast-msg"></span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = '';
+let allLicences = [];
+let editMode = false;
+
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('last-refresh').textContent = 'Actualisé à ' + new Date().toLocaleTimeString('fr-FR');
+  loadUser();
+  loadLicences();
+  // Default start date = today
+  document.getElementById('f-start').value = new Date().toISOString().split('T')[0];
+  // Default end date = 1 year from now
+  const d = new Date(); d.setFullYear(d.getFullYear() + 1);
+  document.getElementById('f-end').value = d.toISOString().split('T')[0];
+});
+
+// ── USER ──────────────────────────────────────────────────────────
+async function loadUser() {
+  try {
+    const r = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+    const d = await r.json();
+    if (d.success) {
+      const init = (d.username || 'A').charAt(0).toUpperCase();
+      document.getElementById('sb-avatar').textContent = init;
+      document.getElementById('sb-uname').textContent = d.username;
+    }
+  } catch(e) {}
+}
+
+// ── LOAD LICENCES ─────────────────────────────────────────────────
+async function loadLicences() {
+  try {
+    const r = await fetch(`${API}/api/licences`, { credentials: 'include' });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+    allLicences = d.licences;
+    renderTable(allLicences);
+    updateStats(allLicences);
+    document.getElementById('last-refresh').textContent = 'Actualisé à ' + new Date().toLocaleTimeString('fr-FR');
+  } catch(e) {
+    document.getElementById('licencesTable').innerHTML = `
+      <tr><td colspan="9">
+        <div class="empty-state">
+          <i class="bi bi-wifi-off"></i>
+          <p>Impossible de charger les licences — mode démo</p>
+        </div>
+      </td></tr>`;
+    // demo data
+    allLicences = [
+      { id:1, company_name:'Tech Solutions SARL', username:'admin', licence_key:'ERP-AI-2025-DEMO-0001', status:'active', start_date:'2025-01-01', end_date:'2027-06-15', max_users:5 },
+      { id:2, company_name:'Min Admin', username:'superadmin', licence_key:'ERP-MIN-LIC-2030-XXXX', status:'active', start_date:'2024-06-01', end_date:'2030-12-31', max_users:10 },
+    ];
+    renderTable(allLicences);
+    updateStats(allLicences);
+  }
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────
+function renderTable(data) {
+  const tbody = document.getElementById('licencesTable');
+  document.getElementById('lic-count').textContent = `(${data.length} résultat${data.length !== 1 ? 's' : ''})`;
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="bi bi-key"></i><p>Aucune licence trouvée</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(l => {
+    const badge = statusBadge(l.status);
+    const expired = l.end_date && new Date(l.end_date) < new Date();
+    return `
+    <tr>
+      <td style="color:var(--text-soft);font-size:12px">#${l.id}</td>
+      <td>
+        <div style="font-weight:600;color:#1A2340">${esc(l.company_name)}</div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--indigo-pale);color:var(--indigo);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">
+            ${(l.username||'?').charAt(0).toUpperCase()}
+          </div>
+          <span style="font-size:13px;color:#4A5578">${esc(l.username || '—')}</span>
+        </div>
+      </td>
+      <td><span class="key-mono">${esc(l.licence_key)}</span></td>
+      <td>${badge}</td>
+      <td style="color:var(--text-soft);font-size:12px">${fmt(l.start_date)}</td>
+      <td style="font-size:12px;color:${expired ? 'var(--red)' : 'var(--text-soft)'};font-weight:${expired?'600':'400'}">
+        ${fmt(l.end_date)}${expired ? ' <i class="bi bi-exclamation-triangle-fill"></i>' : ''}
+      </td>
+      <td>
+        <span style="font-size:13px;font-weight:600;color:#1A2340">${l.max_users || '—'}</span>
+        <span style="font-size:11px;color:var(--text-soft)"> utilisateurs</span>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+          <button class="btn-erp-orange" onclick="copyKey('${esc(l.licence_key)}')" title="Copier la clé">
+            <i class="bi bi-copy"></i>
+          </button>
+          <button class="btn-erp-green" onclick="openEditModal(${l.id})" title="Modifier">
+            <i class="bi bi-pencil-fill"></i> Modifier
+          </button>
+          <button class="btn-erp-red" onclick="deleteLicence(${l.id})" title="Supprimer">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── STATS ─────────────────────────────────────────────────────────
+function updateStats(data) {
+  const active  = data.filter(l => l.status === 'active' && new Date(l.end_date) >= new Date()).length;
+  const expired = data.filter(l => new Date(l.end_date) < new Date()).length;
+  const blocked = data.filter(l => l.status === 'blocked').length;
+  document.getElementById('s-total').textContent   = data.length;
+  document.getElementById('s-active').textContent  = active;
+  document.getElementById('s-expired').textContent = expired;
+  document.getElementById('s-blocked').textContent = blocked;
+}
+
+// ── FILTER ────────────────────────────────────────────────────────
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allLicences.filter(l =>
+    (l.company_name||'').toLowerCase().includes(q) ||
+    (l.licence_key||'').toLowerCase().includes(q) ||
+    (l.username||'').toLowerCase().includes(q) ||
+    (l.status||'').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openCreateModal() {
+  editMode = false;
+  document.getElementById('edit-id').value = '';
+  document.getElementById('modal-title').textContent = 'Nouvelle Licence';
+  document.getElementById('modal-subtitle').textContent = 'Remplissez les informations ci-dessous';
+  document.getElementById('modal-save-btn').innerHTML = '<i class="bi bi-check-lg"></i> Enregistrer';
+  document.getElementById('f-company').value = '';
+  document.getElementById('f-key').value = '';
+  document.getElementById('f-users').value = '1';
+  document.getElementById('f-status').value = 'active';
+  document.getElementById('f-start').value = new Date().toISOString().split('T')[0];
+  const d = new Date(); d.setFullYear(d.getFullYear() + 1);
+  document.getElementById('f-end').value = d.toISOString().split('T')[0];
+  hideModalAlert();
+  generateKey();
+  new bootstrap.Modal(document.getElementById('licenceModal')).show();
+}
+
+function openEditModal(id) {
+  const l = allLicences.find(x => x.id === id);
+  if (!l) return;
+  editMode = true;
+  document.getElementById('edit-id').value = l.id;
+  document.getElementById('modal-title').textContent = 'Modifier la Licence';
+  document.getElementById('modal-subtitle').textContent = `Édition de ${l.company_name}`;
+  document.getElementById('modal-save-btn').innerHTML = '<i class="bi bi-pencil-fill"></i> Mettre à jour';
+  document.getElementById('f-company').value = l.company_name || '';
+  document.getElementById('f-key').value = l.licence_key || '';
+  document.getElementById('f-users').value = l.max_users || 1;
+  document.getElementById('f-status').value = l.status || 'active';
+  document.getElementById('f-start').value = (l.start_date||'').split('T')[0];
+  document.getElementById('f-end').value = (l.end_date||'').split('T')[0];
+  hideModalAlert();
+  new bootstrap.Modal(document.getElementById('licenceModal')).show();
+}
+
+// ── SAVE (CREATE / UPDATE) ────────────────────────────────────────
+async function saveLicence() {
+  const company  = document.getElementById('f-company').value.trim();
+  const key      = document.getElementById('f-key').value.trim();
+  const start    = document.getElementById('f-start').value;
+  const end      = document.getElementById('f-end').value;
+  const users    = document.getElementById('f-users').value;
+  const status   = document.getElementById('f-status').value;
+
+  if (!company || !key || !start || !end) {
+    showModalAlert('Veuillez remplir tous les champs obligatoires.');
+    return;
+  }
+  if (new Date(end) < new Date(start)) {
+    showModalAlert('La date de fin doit être postérieure à la date de début.');
+    return;
+  }
+
+  const id = document.getElementById('edit-id').value;
+  const btn = document.getElementById('modal-save-btn');
+  btn.innerHTML = '<span class="spin"></span> Enregistrement...';
+  btn.disabled = true;
+
+  try {
+    const payload = { company_name: company, licence_key: key, start_date: start, end_date: end, max_users: parseInt(users), status };
+    const method = editMode ? 'PUT' : 'POST';
+    const url = editMode ? `${API}/api/licences/${id}` : `${API}/api/licences`;
+    const r = await fetch(url, {
+      method, credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Erreur serveur');
+    bootstrap.Modal.getInstance(document.getElementById('licenceModal')).hide();
+    showToast(editMode ? 'Licence mise à jour ✓' : 'Licence créée avec succès ✓', 'success');
+    loadLicences();
+  } catch(e) {
+    showModalAlert(e.message);
+  } finally {
+    btn.innerHTML = editMode ? '<i class="bi bi-pencil-fill"></i> Mettre à jour' : '<i class="bi bi-check-lg"></i> Enregistrer';
+    btn.disabled = false;
+  }
+}
+
+// ── CONFIRM DIALOG ────────────────────────────────────────────────
+let _confirmCallback = null;
+function showConfirm(detail, callback) {
+  _confirmCallback = callback;
+  document.getElementById('confirm-detail-text').textContent = detail;
+  document.getElementById('confirm-ok-btn').onclick = () => { closeConfirm(); callback(); };
+  const bd = document.getElementById('confirmBackdrop');
+  bd.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => bd.classList.add('show')));
+}
+function closeConfirm() {
+  const bd = document.getElementById('confirmBackdrop');
+  bd.classList.remove('show');
+  setTimeout(() => { bd.style.display = 'none'; _confirmCallback = null; }, 220);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
+
+// ── DELETE ────────────────────────────────────────────────────────
+async function deleteLicence(id) {
+  const l = allLicences.find(x => x.id === id);
+  showConfirm(`${l?.company_name || 'Licence #' + id}`, async () => {
+    try {
+      const btn = document.getElementById('confirm-ok-btn');
+      btn.innerHTML = '<span class="spin" style="border-top-color:#fff;border-color:rgba(255,255,255,.3)"></span> Suppression...';
+      btn.disabled = true;
+      const r = await fetch(`${API}/api/licences/${id}`, { method: 'DELETE', credentials: 'include' });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      showToast('Licence supprimée avec succès', 'error');
+      loadLicences();
+    } catch(e) {
+      showToast('Erreur : ' + e.message, 'error');
+    }
+  });
+}
+
+// ── KEY GENERATOR ─────────────────────────────────────────────────
+function generateKey() {
+  const seg = () => Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').substring(0,4).padEnd(4,'X');
+  const key = `ERP-AI-${seg()}-${seg()}-${seg()}-${seg()}`;
+  document.getElementById('f-key').value = key;
+}
+
+function copyKey(key) {
+  navigator.clipboard.writeText(key).then(() => showToast('Clé copiée dans le presse-papiers', 'success'));
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function statusBadge(s) {
+  if (s === 'active')  return '<span class="badge-green"><i class="bi bi-check-circle-fill me-1"></i>Active</span>';
+  if (s === 'blocked') return '<span class="badge-orange"><i class="bi bi-slash-circle-fill me-1"></i>Bloquée</span>';
+  if (s === 'expired') return '<span class="badge-red"><i class="bi bi-clock-history me-1"></i>Expirée</span>';
+  return `<span class="badge-gray">${s}</span>`;
+}
+
+function fmt(d) {
+  if (!d) return '—';
+  const dd = new Date(d);
+  return isNaN(dd) ? d : dd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showModalAlert(msg) {
+  document.getElementById('modal-alert-text').textContent = msg;
+  document.getElementById('modal-alert').style.display = 'block';
+}
+function hideModalAlert() {
+  document.getElementById('modal-alert').style.display = 'none';
+}
+
+function showToast(msg, type='info') {
+  const icons = { success:'<i class="bi bi-check-circle-fill" style="color:var(--green)"></i>', error:'<i class="bi bi-x-circle-fill" style="color:var(--red)"></i>', info:'<i class="bi bi-info-circle-fill" style="color:var(--indigo)"></i>' };
+  document.getElementById('toast-icon').innerHTML = icons[type] || icons.info;
+  document.getElementById('toast-msg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+
+<!-- ── CONFIRM DIALOG ─────────────────────────────────────────────── -->
+<div class="confirm-backdrop" id="confirmBackdrop" style="display:none">
+  <div class="confirm-box">
+    <div class="confirm-icon-wrap">
+      <i class="bi bi-trash3-fill"></i>
+    </div>
+    <div class="confirm-title">Supprimer la licence ?</div>
+    <div class="confirm-msg">Cette action est <strong>irréversible</strong>.<br>La licence sera définitivement supprimée.</div>
+    <div class="confirm-detail" id="confirm-detail-text"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeConfirm()">
+        <i class="bi bi-x-lg"></i> Annuler
+      </button>
+      <button class="confirm-delete" id="confirm-ok-btn">
+        <i class="bi bi-trash3-fill"></i> Oui, supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
