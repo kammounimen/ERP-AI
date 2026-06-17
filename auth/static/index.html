@@ -1523,6 +1523,7 @@ function renderLicTable(data) {
       <td><span style="font-size:13px;font-weight:600;color:#1A2340">${l.max_users || '—'}</span> <span style="font-size:11px;color:var(--text-soft)">utilisateurs</span></td>
       <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
         <button class="btn-erp-orange" onclick="copyLicKey('${licEsc(l.licence_key)}')" title="Copier la clé"><i class="bi bi-copy"></i></button>
+        <button class="btn-erp-primary" onclick="openRenewLicModal(${l.id})" title="Renouveler" style="padding:6px 13px;font-size:12px;box-shadow:none"><i class="bi bi-arrow-clockwise"></i> Renouveler</button>
         <button class="btn-erp-green" onclick="openEditLicModal(${l.id})" title="Modifier"><i class="bi bi-pencil-fill"></i> Modifier</button>
         <button class="btn-erp-red" onclick="deleteLicence(${l.id})" title="Supprimer"><i class="bi bi-trash-fill"></i></button>
       </div></td>
@@ -1622,6 +1623,59 @@ function generateLicKey() {
 }
 function copyLicKey(key) {
   navigator.clipboard.writeText(key).then(() => showToast('Clé copiée !', 'success'));
+}
+
+// ── RENOUVELLEMENT LICENCE ────────────────────────────────────────
+let renewLicId = null;
+
+function openRenewLicModal(id) {
+  const l = allLicences.find(x => x.id === id);
+  if (!l) return;
+  renewLicId = id;
+  const currentEnd = (l.end_date || '').split('T')[0];
+  document.getElementById('renew-lic-id').value = id;
+  document.getElementById('renew-lic-subtitle').textContent = `Renouvellement — ${l.company_name}`;
+  document.getElementById('renew-lic-current-end').textContent = licFmt(currentEnd);
+  document.getElementById('renew-lic-months').value = '12';
+  document.getElementById('renew-lic-notes').value = '';
+  document.getElementById('renew-lic-alert').style.display = 'none';
+  updateRenewLicPreview(currentEnd);
+  document.getElementById('renew-lic-months').onchange = () => updateRenewLicPreview(currentEnd);
+  new bootstrap.Modal(document.getElementById('renewLicModal')).show();
+}
+
+function updateRenewLicPreview(baseDate) {
+  const months = parseInt(document.getElementById('renew-lic-months').value);
+  let base = new Date(baseDate);
+  if (isNaN(base) || base < new Date()) base = new Date();
+  base.setMonth(base.getMonth() + months);
+  document.getElementById('renew-lic-new-end').textContent = base.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+async function submitRenewLic() {
+  const btn = document.getElementById('renew-lic-save-btn');
+  const months = parseInt(document.getElementById('renew-lic-months').value);
+  const notes = document.getElementById('renew-lic-notes').value.trim();
+  btn.innerHTML = '<span class="spin"></span> Renouvellement...';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/api/licences/${renewLicId}/renew`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ months, notes })
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Erreur serveur');
+    bootstrap.Modal.getInstance(document.getElementById('renewLicModal')).hide();
+    showToast(`Licence renouvelée jusqu'au ${licFmt(d.new_end_date)} ✓`, 'success');
+    loadLicences();
+  } catch(e) {
+    document.getElementById('renew-lic-alert-text').textContent = e.message;
+    document.getElementById('renew-lic-alert').style.display = 'block';
+  } finally {
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Confirmer le renouvellement';
+    btn.disabled = false;
+  }
 }
 function licStatusBadge(s) {
   if (s === 'active')  return '<span class="badge-green"><i class="bi bi-check-circle-fill me-1"></i>Active</span>';
@@ -2048,6 +2102,54 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="modal-footer">
     <button class="btn-erp-outline" data-bs-dismiss="modal">Annuler</button>
     <button class="btn-erp-primary" id="lic-modal-save-btn" onclick="saveLicence()"><i class="bi bi-check-lg"></i> Enregistrer</button>
+  </div>
+</div></div></div>
+
+<!-- ══ MODAL RENOUVELLEMENT LICENCE ══ -->
+<div class="modal fade modal-custom" id="renewLicModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered" style="max-width:440px">
+<div class="modal-content">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title-custom"><i class="bi bi-arrow-clockwise me-2" style="color:var(--green)"></i>Renouveler la licence</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:2px" id="renew-lic-subtitle">Prolongation de la date de fin</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="renew-lic-id">
+    <div style="background:var(--indigo-pale);border:1px solid #c5cce8;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px">
+      <div style="color:var(--text-soft);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Date de fin actuelle</div>
+      <div style="font-weight:700;color:var(--indigo);font-size:15px" id="renew-lic-current-end">—</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Durée du renouvellement</label>
+      <select class="form-control-custom" id="renew-lic-months">
+        <option value="1">1 mois</option>
+        <option value="3">3 mois</option>
+        <option value="6">6 mois</option>
+        <option value="12" selected>1 an (12 mois)</option>
+        <option value="24">2 ans (24 mois)</option>
+        <option value="36">3 ans (36 mois)</option>
+      </select>
+    </div>
+    <div style="background:var(--green-soft);border:1px solid #b2e8cf;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px">
+      <div style="color:var(--text-soft);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Nouvelle date de fin prévue</div>
+      <div style="font-weight:700;color:var(--green);font-size:15px" id="renew-lic-new-end">—</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">Notes (optionnel)</label>
+      <input type="text" class="form-control-custom" id="renew-lic-notes" placeholder="Ex : Renouvellement annuel 2026">
+    </div>
+    <div id="renew-lic-alert" style="display:none;background:var(--red-soft);color:var(--red);border:1px solid #f5b8b8;border-radius:8px;padding:10px 14px;font-size:13px">
+      <i class="bi bi-exclamation-triangle me-2"></i><span id="renew-lic-alert-text"></span>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-erp-outline" data-bs-dismiss="modal">Annuler</button>
+    <button class="btn-erp-primary" id="renew-lic-save-btn" onclick="submitRenewLic()">
+      <i class="bi bi-arrow-clockwise"></i> Confirmer le renouvellement
+    </button>
   </div>
 </div></div></div>
 

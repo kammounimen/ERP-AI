@@ -639,7 +639,84 @@ def delete_user(user_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/licences/<int:id>/renew", methods=["POST"])
+@login_required
+def renew_licence(id):
+    data = request.get_json() or {}
+    months = int(data.get("months", 12))   # durée en mois (défaut 12)
+    notes  = data.get("notes", "")
 
+    conn = get_db()
+    with conn.cursor() as cur:
+        # Récupérer la licence
+        cur.execute("SELECT * FROM licences WHERE id=%s", (id,))
+        lic = cur.fetchone()
+        if not lic:
+            conn.close()
+            return jsonify({"success": False, "error": "Licence introuvable"}), 404
+
+        # Date de base = end_date actuelle (ou aujourd'hui si déjà expirée)
+        base = lic["end_date"]
+        if isinstance(base, str):
+            base = datetime.date.fromisoformat(base)
+        if base < datetime.date.today():
+            base = datetime.date.today()   # on repart d'aujourd'hui si expirée
+
+        # Calculer la nouvelle end_date
+        month = base.month - 1 + months
+        new_end = base.replace(
+            year  = base.year + month // 12,
+            month = month % 12 + 1,
+            day   = base.day
+        )
+
+        old_end = lic["end_date"]
+
+        # Mettre à jour la licence
+        cur.execute("""
+            UPDATE licences
+            SET end_date=%s, status='active'
+            WHERE id=%s
+        """, (new_end, id))
+
+        # Enregistrer dans l'historique
+        cur.execute("""
+            INSERT INTO licence_renewals
+                (licence_id, old_end_date, new_end_date, renewed_by, notes)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (id, old_end, new_end, session.get("username"), notes))
+
+    conn.commit()
+    conn.close()
+
+    add_log("INFO", f"Licence #{id} renouvelée jusqu'au {new_end} par {session.get('username')}")
+    return jsonify({
+        "success": True,
+        "new_end_date": str(new_end),
+        "old_end_date": str(old_end)
+    })
+
+
+@app.route("/api/licences/<int:id>/renewals", methods=["GET"])
+@login_required
+def get_renewals(id):
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT * FROM licence_renewals
+            WHERE licence_id=%s
+            ORDER BY renewed_at DESC
+        """, (id,))
+        rows = cur.fetchall()
+    conn.close()
+    for r in rows:
+        if isinstance(r.get("renewed_at"), datetime.datetime):
+            r["renewed_at"] = r["renewed_at"].isoformat()
+        if isinstance(r.get("old_end_date"), datetime.date):
+            r["old_end_date"] = r["old_end_date"].isoformat()
+        if isinstance(r.get("new_end_date"), datetime.date):
+            r["new_end_date"] = r["new_end_date"].isoformat()
+    return jsonify({"success": True, "renewals": rows})
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
