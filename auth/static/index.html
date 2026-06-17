@@ -1639,13 +1639,37 @@ function openRenewLicModal(id) {
   document.getElementById('renew-lic-months').value = '12';
   document.getElementById('renew-lic-notes').value = '';
   document.getElementById('renew-lic-alert').style.display = 'none';
+  document.getElementById('renew-lic-custom-wrap').style.display = 'none';
+  document.getElementById('renew-lic-custom-months').value = '';
   updateRenewLicPreview(currentEnd);
-  document.getElementById('renew-lic-months').onchange = () => updateRenewLicPreview(currentEnd);
+  document.getElementById('renew-lic-months').onchange = () => {
+    const val = document.getElementById('renew-lic-months').value;
+    const customWrap = document.getElementById('renew-lic-custom-wrap');
+    const customInput = document.getElementById('renew-lic-custom-months');
+    if (val === 'custom') {
+      customWrap.style.display = 'block';
+      customInput.focus();
+      customInput.oninput = () => updateRenewLicPreview(currentEnd);
+    } else {
+      customWrap.style.display = 'none';
+      updateRenewLicPreview(currentEnd);
+    }
+  };
   new bootstrap.Modal(document.getElementById('renewLicModal')).show();
 }
 
 function updateRenewLicPreview(baseDate) {
-  const months = parseInt(document.getElementById('renew-lic-months').value);
+  const sel = document.getElementById('renew-lic-months').value;
+  let months;
+  if (sel === 'custom') {
+    months = parseInt(document.getElementById('renew-lic-custom-months').value);
+    if (!months || months < 1) {
+      document.getElementById('renew-lic-new-end').textContent = '— saisir le nombre de mois';
+      return;
+    }
+  } else {
+    months = parseInt(sel);
+  }
   let base = new Date(baseDate);
   if (isNaN(base) || base < new Date()) base = new Date();
   base.setMonth(base.getMonth() + months);
@@ -1654,7 +1678,18 @@ function updateRenewLicPreview(baseDate) {
 
 async function submitRenewLic() {
   const btn = document.getElementById('renew-lic-save-btn');
-  const months = parseInt(document.getElementById('renew-lic-months').value);
+  const sel = document.getElementById('renew-lic-months').value;
+  let months;
+  if (sel === 'custom') {
+    months = parseInt(document.getElementById('renew-lic-custom-months').value);
+    if (!months || months < 1 || months > 120) {
+      document.getElementById('renew-lic-alert-text').textContent = 'Veuillez saisir une durée entre 1 et 120 mois.';
+      document.getElementById('renew-lic-alert').style.display = 'block';
+      return;
+    }
+  } else {
+    months = parseInt(sel);
+  }
   const notes = document.getElementById('renew-lic-notes').value.trim();
   btn.innerHTML = '<span class="spin"></span> Renouvellement...';
   btn.disabled = true;
@@ -2131,7 +2166,20 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="12" selected>1 an (12 mois)</option>
         <option value="24">2 ans (24 mois)</option>
         <option value="36">3 ans (36 mois)</option>
+        <option value="custom">Autre durée...</option>
       </select>
+      <!-- Champ personnalisé, caché par défaut -->
+      <div id="renew-lic-custom-wrap" style="display:none;margin-top:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="number" id="renew-lic-custom-months" class="form-control-custom"
+            min="1" max="120" placeholder="Ex : 18"
+            style="max-width:120px;text-align:center;font-weight:600;font-size:15px">
+          <span style="font-size:13px;color:var(--text-soft)">mois</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-soft);margin-top:5px">
+          <i class="bi bi-info-circle"></i> Saisissez le nombre de mois souhaité (1 à 120)
+        </div>
+      </div>
     </div>
     <div style="background:var(--green-soft);border:1px solid #b2e8cf;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px">
       <div style="color:var(--text-soft);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Nouvelle date de fin prévue</div>
