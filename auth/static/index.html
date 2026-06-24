@@ -1401,9 +1401,56 @@ async function sysCtrl(action) {
   } catch(e) { showToast(`Action "${action}" — mode démo`,'warn'); }
 }
 
-function launchERP() {
-  showToast('Ouverture de l\'interface ERP...','info');
-  setTimeout(() => { window.open(document.getElementById('cfg-url')?.value||'http://localhost:8001','_blank'); }, 800);
+/**
+ * REMPLACE la fonction launchERP() existante dans index.html (ligne ~1404)
+ * par celle-ci.
+ *
+ * Ancienne version :
+ *   function launchERP() {
+ *     showToast('Ouverture de l\'interface ERP...','info');
+ *     setTimeout(() => { window.open(document.getElementById('cfg-url')?.value||'http://localhost:8001','_blank'); }, 800);
+ *   }
+ *
+ * Nouvelle version : récupère un token JWT depuis Django, puis ouvre
+ * Laminas avec ce token en paramètre d'URL pour le SSO.
+ */
+
+// URL de base de l'ERP Laminas — adapte le port si besoin
+const ERP_BASE_URL = 'http://localhost:8080';
+
+async function launchERP() {
+    showToast('Préparation de la connexion à l\'ERP...', 'info');
+
+    try {
+        const response = await fetch(`${API}/api/auth/erp-token`, {
+            method: 'GET',
+            credentials: 'include',  // important : envoie le cookie de session Django
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showToast('Session expirée, merci de te reconnecter.', 'error');
+            } else {
+                showToast('Erreur lors de la génération du token ERP.', 'error');
+            }
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.token) {
+            showToast('Impossible de générer le token ERP.', 'error');
+            return;
+        }
+
+        // Ouvre Laminas avec le token dans l'URL
+        const erpUrl = `${ERP_BASE_URL}/invoice?token=${encodeURIComponent(data.token)}`;
+        window.open(erpUrl, '_blank');
+
+    } catch (err) {
+        console.error('Erreur launchERP:', err);
+        showToast('Erreur réseau lors de l\'ouverture de l\'ERP.', 'error');
+    }
 }
 function copyUrl() {
   navigator.clipboard.writeText(document.getElementById('api-url-home')?.textContent||'http://localhost:8000').then(() => showToast('URL copiée !','success'));

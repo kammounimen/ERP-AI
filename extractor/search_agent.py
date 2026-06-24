@@ -417,12 +417,37 @@ def run_search_agent(user_query: str) -> dict:
     print(f"        Champs    : {intent_data['fields']}")
     print(f"        Confiance : {intent_data.get('confidence', '?')}")
 
-    # Étape 2 : Recherche en BDD
+    # Étape 2 : Recherche en BDD (ciblée sur les champs déduits de l'intention)
     print("  [2/3] Recherche en base de données...")
     search_query = intent_data.get("query_normalized") or normalize_text(user_query)
     search_result = search_invoices(query=search_query, fields=intent_data["fields"])
     print(f"        Stratégie : {search_result['strategy']}")
     print(f"        Résultats : {search_result['count']}")
+
+    # ── Fallback élargi ──────────────────────────────────────────────────
+    # L'intention détectée (ex: "search_client") peut être correcte en
+    # apparence mais cibler les mauvais champs si le nom recherché se
+    # trouve en réalité dans un autre champ (ex: un nom de personne utilisé
+    # comme vendor_name plutôt que client_name).
+    # Si la recherche ciblée ne donne RIEN, on retente sur TOUS les champs
+    # texte disponibles avant de conclure à un échec.
+    widened = False
+    if search_result["count"] == 0:
+        all_fields = list(SEARCHABLE_FIELDS.keys())
+        if set(intent_data["fields"]) != set(all_fields):
+            print("  [2bis/3] Aucun résultat ciblé — élargissement à tous les champs...")
+            search_result = search_invoices(query=search_query, fields=all_fields)
+            print(f"        Stratégie : {search_result['strategy']}")
+            print(f"        Résultats : {search_result['count']}")
+            if search_result["count"] > 0:
+                widened = True
+                # On garde une trace que l'élargissement a permis de trouver
+                # le résultat, utile pour informer l'utilisateur dans la
+                # réponse en langage naturel.
+                intent_data["explanation"] = (
+                    f"{intent_data.get('explanation', '')} "
+                    "(recherche élargie à tous les champs après un premier essai infructueux)"
+                ).strip()
 
     # Étape 3 : Formulation de la réponse
     print("  [3/3] Génération de la réponse...")
@@ -436,4 +461,5 @@ def run_search_agent(user_query: str) -> dict:
         "count":            search_result["count"],
         "results":          search_result["results"],
         "natural_response": natural_response,
+        "widened_search":   widened,
     }
