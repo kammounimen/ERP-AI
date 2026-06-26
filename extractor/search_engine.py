@@ -49,34 +49,56 @@ def _get_conn():
 # Helpers SQL
 # ---------------------------------------------------------------------------
 
-def _fetch_all_invoices(conn) -> list[dict]:
-    """Récupère toutes les factures avec leurs lignes d'articles."""
+def _owner_clause(user_id: int | None, role: str | None) -> tuple[str, tuple]:
+    """
+    Construit une clause SQL additionnelle pour restreindre les résultats
+    aux factures créées par user_id, sauf si role == 'admin' (accès total).
+
+    Retourne (clause_sql, params) — clause_sql est soit "1=1" (pas de
+    restriction), soit "i.created_by = %s".
+    """
+    if role == "admin":
+        return "1=1", ()
+    return "i.created_by = %s", (user_id,)
+
+
+def _fetch_all_invoices(conn, user_id: int | None = None, role: str | None = None) -> list[dict]:
+    """Récupère toutes les factures (visibles par cet utilisateur) avec leurs lignes d'articles."""
+    owner_sql, owner_params = _owner_clause(user_id, role)
     with conn.cursor(pymysql.cursors.DictCursor) as cur:
-        cur.execute("""
+        cur.execute(f"""
             SELECT i.*,
                    GROUP_CONCAT(ii.description SEPARATOR ' | ') AS items_desc
             FROM invoices i
             LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
+            WHERE {owner_sql}
             GROUP BY i.id
             ORDER BY i.created_at DESC
-        """)
+        """, owner_params)
         return cur.fetchall()
 
 
-def _fetch_invoices_sql(conn, where_clause: str, params: tuple) -> list[dict]:
-    """Exécute une requête filtrée et retourne les factures."""
+def _fetch_invoices_sql(
+    conn,
+    where_clause: str,
+    params: tuple,
+    user_id: int | None = None,
+    role: str | None = None,
+) -> list[dict]:
+    """Exécute une requête filtrée (+ restriction propriétaire) et retourne les factures."""
+    owner_sql, owner_params = _owner_clause(user_id, role)
     sql = f"""
         SELECT i.*,
                GROUP_CONCAT(ii.description SEPARATOR ' | ') AS items_desc
         FROM invoices i
         LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
-        WHERE {where_clause}
+        WHERE ({where_clause}) AND {owner_sql}
         GROUP BY i.id
         ORDER BY i.created_at DESC
         LIMIT 50
     """
     with conn.cursor(pymysql.cursors.DictCursor) as cur:
-        cur.execute(sql, params)
+        cur.execute(sql, tuple(params) + owner_params)
         return cur.fetchall()
 
 
@@ -84,7 +106,7 @@ def _fetch_invoices_sql(conn, where_clause: str, params: tuple) -> list[dict]:
 # Stratégie 1 : Recherche exacte
 # ---------------------------------------------------------------------------
 
-def search_exact(query: str, fields: list[str], conn) -> list[dict]:
+def search_exact(query: str, fields: list[str], conn, user_id: int | None = None, role: str | None = None) -> list[dict]:
     """
     Recherche stricte : LOWER(champ) = query_normalisé.
     Insensible à la casse et aux accents.
@@ -100,7 +122,7 @@ def search_exact(query: str, fields: list[str], conn) -> list[dict]:
         params.append(norm)
 
     where = " OR ".join(conditions)
-    results = _fetch_invoices_sql(conn, where, tuple(params))
+    results = _fetch_invoices_sql(conn, where, tuple(params), user_id=user_id, role=role)
 
     for r in results:
         r["_match_type"] = "exact"
@@ -125,7 +147,7 @@ def _token_match_ratio(tokens: list[str], field_value: str) -> float:
     return matched / len(tokens)
 
 
-def search_partial(query: str, fields: list[str], conn) -> list[dict]:
+def search_partial(query: str, fields: list[str], conn, user_id: int | None = None, role: str | None = None) -> list[dict]:
     """
     Recherche par sous-chaîne : LOWER(champ) LIKE '%token%'.
     
@@ -154,7 +176,7 @@ def search_partial(query: str, fields: list[str], conn) -> list[dict]:
         return []
 
     where = " OR ".join(conditions)
-    candidates = _fetch_invoices_sql(conn, where, tuple(params))
+    candidates = _fetch_invoices_sql(conn, where, tuple(params), user_id=user_id, role=role)
 
     # ── Filtre qualité : garder seulement les vrais matchs ──────────────────
     results = []
@@ -179,17 +201,17 @@ def search_partial(query: str, fields: list[str], conn) -> list[dict]:
 # Stratégie 3 : Recherche floue (Fuzzy / Levenshtein)
 # ---------------------------------------------------------------------------
 
-def search_fuzzy(query: str, fields: list[str], conn) -> list[dict]:
+def search_fuzzy(query: str, fields: list[str], conn, user_id: int | None = None, role: str | None = None) -> list[dict]:
     """
     Recherche approximative avec RapidFuzz.
-    Récupère tous les enregistrements et calcule la similarité
-    entre la requête et les valeurs de chaque champ.
+    Récupère tous les enregistrements (visibles par cet utilisateur) et
+    calcule la similarité entre la requête et les valeurs de chaque champ.
     """
     norm_query = normalize_text(query)
     if not norm_query:
         return []
 
-    all_invoices = _fetch_all_invoices(conn)
+    all_invoices = _fetch_all_invoices(conn, user_id=user_id, role=role)
     scored: list[tuple[float, dict]] = []
 
     for invoice in all_invoices:
@@ -233,12 +255,19 @@ def search_invoices(
     query: str,
     fields: list[str] | None = None,
     max_results: int = 20,
+    user_id: int | None = None,
+    role: str | None = None,
 ) -> dict:
     """
     Recherche intelligente sur les factures en 3 passes :
     1. Exacte    → correspondance parfaite (insensible à la casse/accents)
     2. Partielle → tokens présents dans le champ (filtrée, pas de faux positifs)
     3. Floue     → Levenshtein/RapidFuzz pour les fautes de frappe
+
+    Si role != 'admin', la recherche est restreinte aux factures créées
+    par user_id (created_by = user_id) à chaque étape — un employé ne
+    peut donc jamais retrouver, même approximativement, une facture
+    appartenant à un autre utilisateur.
 
     Retourne
     --------
@@ -260,17 +289,17 @@ def search_invoices(
             return unique
 
         # Passe 1 : Exacte
-        results = deduplicate(search_exact(query, fields, conn))
+        results = deduplicate(search_exact(query, fields, conn, user_id=user_id, role=role))
         if results:
             return _build_response(query, "exact", results[:max_results])
 
         # Passe 2 : Partielle (avec filtre qualité)
-        results = deduplicate(search_partial(query, fields, conn))
+        results = deduplicate(search_partial(query, fields, conn, user_id=user_id, role=role))
         if results:
             return _build_response(query, "partial", results[:max_results])
 
         # Passe 3 : Floue
-        results = deduplicate(search_fuzzy(query, fields, conn))
+        results = deduplicate(search_fuzzy(query, fields, conn, user_id=user_id, role=role))
         if results:
             return _build_response(query, "fuzzy", results[:max_results])
 

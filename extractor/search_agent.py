@@ -396,9 +396,13 @@ def _format_response(user_query: str, search_result: dict, intent_data: dict) ->
 # Point d'entrée public
 # ---------------------------------------------------------------------------
 
-def run_search_agent(user_query: str) -> dict:
+def run_search_agent(user_query: str, user_id: int | None = None, role: str | None = None) -> dict:
     """
     Agent de recherche principal.
+
+    Si role != 'admin', la recherche est restreinte aux factures créées
+    par user_id — un employé ne peut retrouver, même via la recherche IA,
+    que ses propres factures. L'admin n'a aucune restriction.
 
     Retourne
     --------
@@ -420,7 +424,12 @@ def run_search_agent(user_query: str) -> dict:
     # Étape 2 : Recherche en BDD (ciblée sur les champs déduits de l'intention)
     print("  [2/3] Recherche en base de données...")
     search_query = intent_data.get("query_normalized") or normalize_text(user_query)
-    search_result = search_invoices(query=search_query, fields=intent_data["fields"])
+    search_result = search_invoices(
+        query=search_query,
+        fields=intent_data["fields"],
+        user_id=user_id,
+        role=role,
+    )
     print(f"        Stratégie : {search_result['strategy']}")
     print(f"        Résultats : {search_result['count']}")
 
@@ -436,7 +445,12 @@ def run_search_agent(user_query: str) -> dict:
         all_fields = list(SEARCHABLE_FIELDS.keys())
         if set(intent_data["fields"]) != set(all_fields):
             print("  [2bis/3] Aucun résultat ciblé — élargissement à tous les champs...")
-            search_result = search_invoices(query=search_query, fields=all_fields)
+            search_result = search_invoices(
+                query=search_query,
+                fields=all_fields,
+                user_id=user_id,
+                role=role,
+            )
             print(f"        Stratégie : {search_result['strategy']}")
             print(f"        Résultats : {search_result['count']}")
             if search_result["count"] > 0:
