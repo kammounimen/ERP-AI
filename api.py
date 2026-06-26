@@ -17,7 +17,7 @@ import shutil
 import tempfile
 from typing import Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -25,6 +25,7 @@ from extractor.pdf_extractor import extract_from_file
 from extractor.ai_parser import parse_invoice
 from extractor.db_handler import save_invoice, list_invoices, get_invoice_by_id
 from extractor.search_agent import run_search_agent
+from extractor.license_checker import check_license
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +88,11 @@ class InvoiceValidated(BaseModel):
 
 class SearchQuery(BaseModel):
     query: str
+    licence_key: str
+
+
+class LicenseCheckRequest(BaseModel):
+    licence_key: str
 
 
 # ---------------------------------------------------------------------------
@@ -95,12 +101,19 @@ class SearchQuery(BaseModel):
 # ---------------------------------------------------------------------------
 
 @app.post("/api/extract")
-async def extract_invoice(file: UploadFile = File(...)):
+async def extract_invoice(file: UploadFile = File(...), licence_key: str = Form(...)):
     """
-    Reçoit un fichier (PDF/JPG/PNG), lance l'extraction + l'analyse Mistral,
-    et retourne les données structurées brutes pour que l'utilisateur les valide.
+    Reçoit un fichier (PDF/JPG/PNG) + la licence_key du client, vérifie la
+    licence, puis lance l'extraction + l'analyse Mistral.
     Ne sauvegarde RIEN en base à cette étape.
     """
+    license_status = check_license(licence_key)
+    if not license_status["valid"]:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Licence invalide : {license_status['reason']}",
+        )
+
     allowed_ext = (".pdf", ".jpg", ".jpeg", ".png", ".webp")
     ext = os.path.splitext(file.filename)[1].lower()
 
@@ -206,7 +219,15 @@ async def search(payload: SearchQuery):
     """
     Lance l'agent de recherche intelligente (intention + recherche multi-stratégie
     + réponse en langage naturel) sur la requête utilisateur.
+    Nécessite une licence valide.
     """
+    license_status = check_license(payload.licence_key)
+    if not license_status["valid"]:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Licence invalide : {license_status['reason']}",
+        )
+
     if not payload.query or not payload.query.strip():
         raise HTTPException(status_code=400, detail="Requête vide")
 
@@ -218,7 +239,22 @@ async def search(payload: SearchQuery):
 
 
 # ---------------------------------------------------------------------------
-# 5. Healthcheck (pour vérifier que l'API tourne, utile pour Django/Laminas)
+# 5. Endpoint de vérification de licence
+#    Appelé par Laminas AVANT chaque action IA (extraction, recherche)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/license/verify")
+async def verify_license(payload: LicenseCheckRequest):
+    """
+    Vérifie la validité d'une licence_key auprès de la base de l'éditeur
+    (invoices_db.licences). Ne touche pas à erp_client_db.
+    """
+    result = check_license(payload.licence_key)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 6. Healthcheck (pour vérifier que l'API tourne, utile pour Django/Laminas)
 # ---------------------------------------------------------------------------
 
 @app.get("/api/health")
