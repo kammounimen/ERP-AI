@@ -41,7 +41,7 @@ MAX_IMAGE_WIDTH_PX    = 10_000             # pixels
 MAX_IMAGE_HEIGHT_PX   = 10_000             # pixels
 MAX_IMAGE_PIXELS      = 50_000_000         # 50 Mpx (width × height)
 MAX_PDF_PAGES         = 300
-ENABLE_CLAMAV         = True               # mettre False pour désactiver ClamAV
+ENABLE_CLAMAV         = False            # mettre False pour désactiver ClamAV
 
 # Extensions déclarées acceptées → types MIME réels attendus
 # Choix volontairement restrictif : formats utiles pour les factures uniquement
