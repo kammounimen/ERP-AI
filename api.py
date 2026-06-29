@@ -23,7 +23,14 @@ from pydantic import BaseModel
 
 from extractor.pdf_extractor import extract_from_file
 from extractor.ai_parser import parse_invoice
-from extractor.db_handler import save_invoice, list_invoices, get_invoice_by_id, count_invoices
+from extractor.db_handler import (
+    save_invoice,
+    list_invoices,
+    get_invoice_by_id,
+    count_invoices,
+    find_product,
+    search_similar_products
+)
 from extractor.search_agent import run_search_agent
 from extractor.license_checker import check_license
 from extractor.file_security import validate_and_sanitize_file, SecurityError   # ← nouveau
@@ -59,6 +66,11 @@ class InvoiceItem(BaseModel):
     quantity: Optional[float] = None
     unit_price: Optional[float] = None
     total_price: Optional[float] = None
+    # Résolus côté Laminas via /api/products/check avant l'envoi :
+    # - product_id renseigné  → produit existant choisi par l'utilisateur, à réutiliser tel quel
+    # - new_product = True    → aucun produit ne correspondait, à créer en base
+    product_id: Optional[int] = None
+    new_product: bool = False
 
 
 class InvoiceValidated(BaseModel):
@@ -98,6 +110,8 @@ class SearchQuery(BaseModel):
 class LicenseCheckRequest(BaseModel):
     licence_key: str
 
+class ProductRequest(BaseModel):
+    description: str
 
 # ---------------------------------------------------------------------------
 # 1. Endpoint d'extraction : upload PDF/image → JSON brut extrait par l'IA
@@ -318,6 +332,25 @@ async def verify_license(payload: LicenseCheckRequest):
     return result
 
 
+@app.post("/api/products/check")
+async def check_product(product: ProductRequest):
+
+    existing = find_product(product.description)
+
+    if existing:
+
+        return {
+            "exists": True,
+            "product_id": existing["id"],
+            "product_name": existing["name"]
+        }
+
+    suggestions = search_similar_products(product.description)
+
+    return {
+        "exists": False,
+        "suggestions": suggestions
+    }
 # ---------------------------------------------------------------------------
 # 6. Healthcheck (pour vérifier que l'API tourne, utile pour Django/Laminas)
 # ---------------------------------------------------------------------------

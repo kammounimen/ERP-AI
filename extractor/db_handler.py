@@ -6,6 +6,9 @@ Gestion de la connexion et des opérations sur la base de données MySQL.
 
 import pymysql
 import pymysql.cursors
+import re
+import unicodedata
+from rapidfuzz import fuzz
 from config import DB_CONFIG
 
 
@@ -13,7 +16,149 @@ def get_connection():
     """Retourne une connexion MySQL active."""
     return pymysql.connect(**DB_CONFIG)
 
+def normalize_product_name(name: str) -> str:
+    """
+    Normalise un nom de produit afin d'éviter les doublons.
+    Exemple :
+        " HP  LaserJet Pro " -> "hp laserjet pro"
+    """
 
+    if not name:
+        return ""
+
+    # Minuscules
+    name = name.lower()
+
+    # Suppression des accents
+    name = unicodedata.normalize("NFD", name)
+    name = "".join(c for c in name if unicodedata.category(c) != "Mn")
+
+    # Suppression des espaces multiples
+    name = re.sub(r"\s+", " ", name)
+
+    return name.strip()
+
+
+
+def find_product(description: str):
+
+    normalized = normalize_product_name(description)
+
+    conn = get_connection()
+
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+
+            cur.execute(
+                """
+                SELECT *
+                FROM products
+                WHERE normalized_name=%s
+                """,
+                (normalized,)
+            )
+
+            return cur.fetchone()
+
+    finally:
+        conn.close()
+
+
+
+
+def create_product(description: str):
+
+    normalized = normalize_product_name(description)
+
+    conn = get_connection()
+
+    try:
+
+        with conn.cursor() as cur:
+
+            cur.execute(
+                """
+                INSERT INTO products
+                (
+                    name,
+                    normalized_name
+                )
+                VALUES
+                (
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    description,
+                    normalized
+                )
+            )
+
+            conn.commit()
+
+            return cur.lastrowid
+
+    finally:
+        conn.close()
+
+
+
+def get_or_create_product(description: str):
+
+    product = find_product(description)
+
+    if product:
+        return product["id"]
+
+    return create_product(description)
+
+
+def search_similar_products(description: str, threshold: int = 80):
+
+    conn = get_connection()
+
+    try:
+
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+
+            cur.execute("""
+                SELECT id,name
+                FROM products
+            """)
+
+            products = cur.fetchall()
+
+        normalized = normalize_product_name(description)
+
+        suggestions = []
+
+        for product in products:
+
+            score = fuzz.ratio(
+                normalized,
+                normalize_product_name(product["name"])
+            )
+
+            if score >= threshold:
+
+                suggestions.append({
+
+                    "id": product["id"],
+                    "name": product["name"],
+                    "score": score
+
+                })
+
+        suggestions.sort(
+            key=lambda x: x["score"],
+            reverse=True
+        )
+
+        return suggestions
+
+    finally:
+        conn.close()
 # ---------------------------------------------------------------------------
 # Sauvegarde de facture
 # ---------------------------------------------------------------------------
@@ -70,17 +215,53 @@ def save_invoice(data: dict, raw_text: str = "", source_file: str = "", created_
             if items:
                 items_sql = """
                     INSERT INTO invoice_items
-                    (invoice_id, description, quantity, unit_price, total_price)
-                    VALUES (%s, %s, %s, %s, %s)
-                """
-                for item in items:
-                    cursor.execute(items_sql, (
+                    (
                         invoice_id,
-                        item.get("description"),
-                        item.get("quantity"),
-                        item.get("unit_price"),
-                        item.get("total_price"),
-                    ))
+                        product_id,
+                        description,
+                        quantity,
+                        unit_price,
+                        total_price
+                    )
+                    VALUES
+                    (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s
+                    )
+    """
+                for item in items:
+
+                    description = (item.get("description") or "").strip()
+
+                    chosen_product_id = item.get("product_id")
+                    is_new_product = bool(item.get("new_product"))
+
+                    if chosen_product_id and not is_new_product:
+                        # L'utilisateur a choisi un produit existant dans la modale
+                        # Laminas (via /api/products/check) : on le réutilise tel quel,
+                        # sans repasser par la recherche/normalisation automatique.
+                        product_id = chosen_product_id
+                    else:
+                        # Pas de choix explicite (new_product=True, ou aucun product_id
+                        # transmis — ex : anciens appels sans la vérification produit) :
+                        # on retombe sur le comportement existant.
+                        product_id = get_or_create_product(description)
+
+                    cursor.execute(
+                        items_sql,
+                        (
+                            invoice_id,
+                            product_id,
+                            description,
+                            item.get("quantity"),
+                            item.get("unit_price"),
+                            item.get("total_price"),
+                        )
+                    )
 
         conn.commit()
         return invoice_id
